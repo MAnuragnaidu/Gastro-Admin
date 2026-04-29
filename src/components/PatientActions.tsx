@@ -8,6 +8,16 @@ export default function PatientActions({ patient }: { patient: any }) {
   const router = useRouter();
 
   const generateDocx = async () => {
+    // Helper to format stringified JSON arrays into clean comma-separated lists
+    const parseArray = (str: any) => {
+      try {
+        const arr = JSON.parse(str || '[]');
+        return Array.isArray(arr) && arr.length > 0 ? arr.join(', ') : 'None';
+      } catch {
+        return str || 'None';
+      }
+    };
+
     const docContent = `Generate complete KP-3P protocol for:
 
 ═══════════════════════════════════════
@@ -35,7 +45,7 @@ PRIMARY DIAGNOSIS: ${patient.primaryDiagnosis || ''}
 MONTREAL CLASSIFICATION: ${patient.montrealClass || ''}
 DISEASE DURATION: ${patient.diseaseDuration || ''}
 
-PREVIOUS SURGERIES: ${patient.previousSurgeries || 'None'}
+PREVIOUS SURGERIES: ${parseArray(patient.previousSurgeries)}
 PERIANAL DISEASE (if CD): 
 
 ═══════════════════════════════════════
@@ -85,7 +95,7 @@ ${patient.currentSupplements || ''}
 TREATMENT HISTORY
 ═══════════════════════════════════════
 PREVIOUS TREATMENTS TRIED:
-${patient.previousTreatmentsTried || 'None'}
+${parseArray(patient.previousTreatmentsTried)}
 
 DETAILS OF FAILED TREATMENTS:
 ${patient.failedTreatments || ''}
@@ -119,7 +129,7 @@ Tetanus/Tdap: ${patient.tetanusTdap || ''}
 ═══════════════════════════════════════
 OTHER MEDICAL INFORMATION
 ═══════════════════════════════════════
-COMORBIDITIES: ${patient.comorbidities || 'None'}
+COMORBIDITIES: ${parseArray(patient.comorbidities)}
 EXTRAINTESTINAL MANIFESTATIONS: ${patient.extraintestinalManif || 'None'}
 
 PREGNANCY/FAMILY PLANNING: ${patient.pregnancyPlanning || ''}
@@ -140,12 +150,96 @@ IMPORTANT LANGUAGE INSTRUCTION:
 - If patient language is English, generate everything in English`;
 
     const doc = new Document({
+      creator: "MyGastro.Ai",
+      title: `KP-3P Protocol: ${patient.name || 'Patient'}`,
+      description: "Automated Patient Clinical Protocol",
+      styles: {
+        paragraphStyles: [
+          {
+            id: "Normal",
+            name: "Normal",
+            basedOn: "Normal",
+            next: "Normal",
+            run: {
+              font: "Calibri",
+              size: 22, // 11pt
+              color: "1E293B",
+            },
+            paragraph: {
+              spacing: {
+                line: 276, // 1.15 line spacing
+                after: 160, // 8pt after
+              },
+            },
+          },
+        ],
+      },
       sections: [
         {
           properties: {},
-          children: docContent.split('\\n').map(line => new Paragraph({
-            children: [new TextRun(line)]
-          })),
+          children: docContent.split('\n').map(line => {
+            // Trim to avoid trailing spaces
+            const txt = line.trimEnd();
+            
+            // Empty lines
+            if (!txt) {
+              return new Paragraph({ children: [new TextRun("")] });
+            }
+
+            // Divider lines
+            if (txt.includes('═════')) {
+              return new Paragraph({
+                children: [new TextRun({ text: txt, color: "94A3B8" })],
+                spacing: { before: 100, after: 100 }
+              });
+            }
+
+            // Section Headers (All caps, no colon, length > 3)
+            if (txt === txt.toUpperCase() && !txt.includes(':') && txt.length > 3) {
+              return new Paragraph({
+                children: [new TextRun({ text: txt, bold: true, size: 24, color: "0F172A" })],
+                spacing: { before: 200, after: 80 }
+              });
+            }
+
+            // Bullet points
+            if (txt.startsWith('- ')) {
+              const labelContent = txt.substring(2);
+              if (labelContent.includes(':')) {
+                 const [label, ...rest] = labelContent.split(':');
+                 return new Paragraph({
+                   bullet: { level: 0 },
+                   children: [
+                     new TextRun({ text: label + ':', bold: true }),
+                     new TextRun({ text: rest.join(':') })
+                   ]
+                 });
+              }
+              return new Paragraph({
+                bullet: { level: 0 },
+                children: [new TextRun({ text: labelContent })]
+              });
+            }
+
+            // Key-Value pairs (Label: Value)
+            if (txt.includes(':')) {
+              const [label, ...rest] = txt.split(':');
+              // Don't bold if it's a very long sentence that just happens to have a colon
+              if (label.length < 50) {
+                return new Paragraph({
+                  children: [
+                    new TextRun({ text: label + ':', bold: true }),
+                    new TextRun({ text: rest.join(':') })
+                  ]
+                });
+              }
+            }
+
+            // Default paragraph
+            return new Paragraph({
+              children: [new TextRun({ text: txt })]
+            });
+          }),
         },
       ],
     });
