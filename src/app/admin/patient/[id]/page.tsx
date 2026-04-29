@@ -547,17 +547,17 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               <div className="pr-field-grid">
                 {[
                   { label: 'Full Name', value: patient.name },
+                  { label: 'Email', value: patient.user?.email || 'N/A' },
                   { label: 'Medical Record No.', value: patient.mrn },
                   { label: 'Contact Phone', value: patient.contactPhone },
                   { label: 'Place of Living', value: patient.placeOfLiving },
                   { label: 'Referred By', value: patient.referredBy },
                   { label: 'Date of Birth', value: patient.dateOfBirth },
-                  { label: 'Occupation', value: patient.occupation },
                   { label: 'Preferred Language', value: patient.preferredLanguage },
                 ].map((f, i) => (
                   <div className="pr-field" key={i}>
                     <div className="pr-field-label">{f.label}</div>
-                    <div className={`pr-field-value${!f.value ? ' empty' : ''}`}>{f.value || 'Not provided'}</div>
+                    <div className={`pr-field-value${!f.value || f.value === 'N/A' ? ' empty' : ''}`}>{f.value || 'Not provided'}</div>
                   </div>
                 ))}
               </div>
@@ -591,18 +591,6 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                       : <span className="empty">None</span>}
                   </div>
                 </div>
-                <div className="pr-field">
-                  <div className="pr-field-label">Comorbidities</div>
-                  <div className="pr-field-value">
-                    {parseComorbidities.length > 0
-                      ? <div className="pr-tag-list">{parseComorbidities.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(249,115,22,0.1)', borderColor: 'rgba(249,115,22,0.2)', color: '#fb923c' }}>{s}</span>)}</div>
-                      : <span className="empty">None</span>}
-                  </div>
-                </div>
-                <div className="pr-field">
-                  <div className="pr-field-label">Extraintestinal Manifestations</div>
-                  <div className="pr-field-value">{patient.extraintestinalManif || '—'}</div>
-                </div>
               </div>
             </div>
 
@@ -630,7 +618,6 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                   { label: 'Abdominal Pain', value: patient.abdominalPain },
                   { label: 'Impact on QoL', value: patient.impactOnQoL },
                   { label: 'Weight Loss', value: patient.weightLoss },
-                  { label: 'Steroid Use', value: patient.steroidUse },
                 ].map((f, i) => (
                   <div className="pr-field" key={i}>
                     <div className="pr-field-label">{f.label}</div>
@@ -664,11 +651,11 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 5. Treatment */}
+            {/* 5. Current Treatment */}
             <div className="pr-card">
               <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>💊</div>
-                <span className="pr-card-title">Treatment History</span>
+                <div className="pr-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>⚕️</div>
+                <span className="pr-card-title">Current Treatment</span>
                 <span className="pr-card-number">05</span>
               </div>
               <div className="pr-field-grid">
@@ -677,8 +664,8 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                   <div className="pr-field-value">{patient.currentIbdMedications || '—'}</div>
                 </div>
                 <div className="pr-field">
-                  <div className="pr-field-label">Failed Treatments</div>
-                  <div className="pr-field-value">{patient.failedTreatments || '—'}</div>
+                  <div className="pr-field-label">Steroid Use</div>
+                  <div className="pr-field-value">{patient.steroidUse || '—'}</div>
                 </div>
                 <div className="pr-field">
                   <div className="pr-field-label">TDM Results</div>
@@ -701,6 +688,17 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                   <div className="pr-field-label">Current Supplements</div>
                   <div className="pr-field-value">{patient.currentSupplements || '—'}</div>
                 </div>
+              </div>
+            </div>
+
+            {/* 6. Treatment History */}
+            <div className="pr-card">
+              <div className="pr-card-header">
+                <div className="pr-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>💊</div>
+                <span className="pr-card-title">Treatment History</span>
+                <span className="pr-card-number">06</span>
+              </div>
+              <div className="pr-field-grid">
                 <div className="pr-field">
                   <div className="pr-field-label">Previous Treatments Tried</div>
                   <div className="pr-field-value">
@@ -709,15 +707,19 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                       : <span style={{ color: '#334155', fontStyle: 'italic' }}>None</span>}
                   </div>
                 </div>
+                <div className="pr-field">
+                  <div className="pr-field-label">Failed Treatments Details</div>
+                  <div className="pr-field-value">{patient.failedTreatments || '—'}</div>
+                </div>
               </div>
             </div>
 
-            {/* 6. Serology */}
+            {/* 7. Serology */}
             <div className="pr-card">
               <div className="pr-card-header">
                 <div className="pr-card-icon" style={{ background: 'rgba(236,72,153,0.12)', color: '#ec4899' }}>🩸</div>
                 <span className="pr-card-title">Infection Screening & Serology</span>
-                <span className="pr-card-number">06</span>
+                <span className="pr-card-number">07</span>
               </div>
               <div className="pr-serology-grid">
                 {[
@@ -738,12 +740,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 7. Vaccination */}
+            {/* 8. Vaccination */}
             <div className="pr-card">
               <div className="pr-card-header">
                 <div className="pr-card-icon" style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>💉</div>
                 <span className="pr-card-title">Vaccination History</span>
-                <span className="pr-card-number">07</span>
+                <span className="pr-card-number">08</span>
               </div>
               <div className="pr-vaccine-grid">
                 {[
@@ -765,16 +767,26 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 8. Other */}
+            {/* 9. Comorbidities & Final Details */}
             <div className="pr-card">
               <div className="pr-card-header">
                 <div className="pr-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>📋</div>
-                <span className="pr-card-title">Other Considerations</span>
-                <span className="pr-card-number">08</span>
+                <span className="pr-card-title">Comorbidities & Final Details</span>
+                <span className="pr-card-number">09</span>
               </div>
               <div className="pr-field-grid">
+                <div className="pr-field">
+                  <div className="pr-field-label">Comorbidities</div>
+                  <div className="pr-field-value">
+                    {parseComorbidities.length > 0
+                      ? <div className="pr-tag-list">{parseComorbidities.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(249,115,22,0.1)', borderColor: 'rgba(249,115,22,0.2)', color: '#fb923c' }}>{s}</span>)}</div>
+                      : <span className="empty">None</span>}
+                  </div>
+                </div>
                 {[
+                  { label: 'Extraintestinal Manifestations', value: patient.extraintestinalManif },
                   { label: 'Pregnancy Planning', value: patient.pregnancyPlanning },
+                  { label: 'Occupation', value: patient.occupation },
                   { label: 'Special Considerations', value: patient.specialConsiderations },
                 ].map((f, i) => (
                   <div className="pr-field" key={i}>

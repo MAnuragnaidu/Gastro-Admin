@@ -1,17 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
-import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
 
-export default function PatientDetails({ patient }: { patient: any }) {
+export default function PatientEditForm({ patient }: { patient: any }) {
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(patient);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
@@ -26,7 +23,7 @@ export default function PatientDetails({ patient }: { patient: any }) {
 
       if (!res.ok) throw new Error('Failed to update patient');
 
-      setIsEditing(false);
+      router.push(`/admin/patient/${patient.id}`);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -36,310 +33,459 @@ export default function PatientDetails({ patient }: { patient: any }) {
     }
   };
 
-  const generateDocx = async () => {
-    // English protocol for the physician
-    const docContent = `Generate complete KP-3P protocol for:
-
-═══════════════════════════════════════
-PATIENT INFORMATION
-═══════════════════════════════════════
-PATIENT: ${formData.name || ''}
-PATIENT ID: ${formData.id || ''}
-EMAIL: ${formData.user?.email || 'N/A'}
-DATE OF BIRTH: ${formData.dateOfBirth || ''}
-CURRENT AGE: ${formData.currentAge || ''} years
-AGE AT DIAGNOSIS: ${formData.ageAtDiagnosis || ''} years
-SEX: ${formData.sex || ''}
-
-SMOKING STATUS: ${formData.smokingStatus || ''}
-Smoking Details: 
-
-CONTACT: ${formData.contactPhone || ''}
-PLACE OF LIVING: ${formData.placeOfLiving || ''}
-REFERRED BY: ${formData.referredBy || ''}
-
-═══════════════════════════════════════
-DISEASE CHARACTERISTICS
-═══════════════════════════════════════
-PRIMARY DIAGNOSIS: ${formData.primaryDiagnosis || ''}
-MONTREAL CLASSIFICATION: ${formData.montrealClass || ''}
-DISEASE DURATION: ${formData.diseaseDuration || ''}
-
-PREVIOUS SURGERIES: ${formData.previousSurgeries || 'None'}
-PERIANAL DISEASE (if CD): 
-
-═══════════════════════════════════════
-CURRENT DISEASE ACTIVITY
-═══════════════════════════════════════
-ACTIVITY LEVEL: ${formData.currentDiseaseActivity || ''}
-ACTIVITY SCORE: 
-
-Current Symptoms:
-- Bowel frequency: ${formData.stoolFrequency || ''}
-- Blood in stool: ${formData.bloodInStool || ''}
-- Abdominal pain: ${formData.abdominalPain || ''}
-- Quality of life impact: ${formData.impactOnQoL || ''}
-- Weight loss: ${formData.weightLoss || ''}
-
-═══════════════════════════════════════
-LABORATORY & INVESTIGATIONS
-═══════════════════════════════════════
-LABS (Date: ${formData.dateMostRecentLabs || ''}):
-${formData.recentLabValues || ''}
-
-ENDOSCOPY (Date: ${formData.dateMostRecentColono || ''}):
-${formData.colonoscopyFindings || ''}
-
-RECENT IMAGING:
-${formData.recentImaging || 'None'}
-
-DEXA SCAN: ${formData.mostRecentDexa || 'None'}
-
-═══════════════════════════════════════
-CURRENT TREATMENT
-═══════════════════════════════════════
-CURRENT MEDICATIONS (with duration):
-${formData.currentIbdMedications || 'None'}
-
-RESPONSE TO CURRENT TREATMENT: ${formData.responseToTreatment || ''}
-
-THERAPEUTIC DRUG MONITORING:
-${formData.tdmResults || ''}
-
-STEROID USE: ${formData.steroidUse || ''}
-
-VITAMIN D/CALCIUM: 
-${formData.currentSupplements || ''}
-
-═══════════════════════════════════════
-TREATMENT HISTORY
-═══════════════════════════════════════
-PREVIOUS TREATMENTS TRIED:
-${formData.previousTreatmentsTried || 'None'}
-
-DETAILS OF FAILED TREATMENTS:
-${formData.failedTreatments || ''}
-
-═══════════════════════════════════════
-INFECTION SCREENING STATUS
-═══════════════════════════════════════
-TB SCREENING: ${formData.tbScreening || ''}
-
-HEPATITIS B STATUS:
-- HBsAg: ${formData.hepBSurfaceAg || ''}
-- Anti-HBs: ${formData.hepBSurfaceAb || ''}
-- Anti-HBc: ${formData.hepBCoreAb || ''}
-
-HEPATITIS C (Anti-HCV): ${formData.antiHcv || ''}
-HIV (Anti-HIV): ${formData.antiHiv || ''}
-
-═══════════════════════════════════════
-VACCINATION HISTORY (DETAILED)
-═══════════════════════════════════════
-Influenza: ${formData.influenza || ''}
-COVID-19: ${formData.covid19 || ''}
-Pneumococcal: ${formData.pneumococcal || ''}
-Hepatitis B: ${formData.hepatitisB || ''}
-Hepatitis A: ${formData.hepatitisA || ''}
-Hepatitis E: ${formData.hepatitisE || ''}
-Zoster (Shingrix): ${formData.zoster || ''}
-MMR/Varicella: ${formData.mmrVaricella || ''}
-Tetanus/Tdap: ${formData.tetanusTdap || ''}
-
-═══════════════════════════════════════
-OTHER MEDICAL INFORMATION
-═══════════════════════════════════════
-COMORBIDITIES: ${formData.comorbidities || 'None'}
-EXTRAINTESTINAL MANIFESTATIONS: ${formData.extraintestinalManif || 'None'}
-
-PREGNANCY/FAMILY PLANNING: ${formData.pregnancyPlanning || ''}
-OCCUPATION: ${formData.occupation || ''}
-
-SPECIAL CONSIDERATIONS:
-${formData.specialConsiderations || ''}
-
-═══════════════════════════════════════
-
-Use 3-page CONCISE patient care plan format.
-
-IMPORTANT LANGUAGE INSTRUCTION:
-- Generate the CLINICAL PROTOCOL (Part 1) in ENGLISH (for the physician)
-- Generate the PATIENT CARE PLAN (Part 2) in: ${formData.preferredLanguage === 'Telugu' ? 'Telugu' : 'English'}
-- Maintain the same structure, warmth, and professionalism in the patient's language
-- Use culturally appropriate medical terminology in ${formData.preferredLanguage === 'Telugu' ? 'Telugu' : 'English'}
-- If patient language is English, generate everything in English`;
-
-    const doc = new Document({
-      sections: [
-        {
-          properties: {},
-          children: docContent.split('\\n').map(line => new Paragraph({
-            children: [new TextRun(line)]
-          })),
-        },
-      ],
-    });
-
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, `KP-3P_Protocol_${formData.name?.replace(/\\s+/g, '_')}_${formData.id}.docx`);
+  const getArrayValue = (field: string) => {
+    try {
+      return Array.isArray(formData[field]) ? formData[field] : JSON.parse(formData[field] || '[]');
+    } catch {
+      return [];
+    }
   };
 
-  const renderField = (label: string, field: string, type = 'text') => {
+  const handleArrayChange = (field: string, text: string) => {
+    const arr = text.split(',').map(s => s.trim()).filter(s => s !== '');
+    handleChange(field, JSON.stringify(arr));
+  };
+
+  const renderField = (label: string, field: string, type = 'text', readOnly = false) => (
+    <div className="pr-field">
+      <label className="pr-field-label">{label}</label>
+      {type === 'textarea' ? (
+        <textarea
+          value={formData[field] || ''}
+          onChange={(e) => handleChange(field, e.target.value)}
+          readOnly={readOnly}
+          className="pr-input"
+          rows={3}
+        />
+      ) : (
+        <input
+          type={type}
+          value={formData[field] || ''}
+          onChange={(e) => handleChange(field, e.target.value)}
+          readOnly={readOnly}
+          className={`pr-input ${readOnly ? 'read-only' : ''}`}
+        />
+      )}
+    </div>
+  );
+
+  const renderArrayField = (label: string, field: string) => {
+    const val = getArrayValue(field).join(', ');
     return (
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 4 }}>{label}</label>
-        {isEditing ? (
-          <input
-            type={type}
-            value={formData[field] || ''}
-            onChange={(e) => handleChange(field, e.target.value)}
-            style={{
-              width: '100%', padding: '8px 12px', background: '#0f172a',
-              border: '1px solid #334155', borderRadius: 6, color: '#f8fafc',
-              fontSize: 14
-            }}
-          />
-        ) : (
-          <div style={{ fontSize: 14, color: '#e2e8f0', minHeight: 20 }}>{formData[field] || '—'}</div>
-        )}
+      <div className="pr-field" style={{ gridColumn: '1/-1' }}>
+        <label className="pr-field-label">{label} <span style={{ textTransform: 'none', color: '#64748b' }}>(comma separated)</span></label>
+        <textarea
+          value={val}
+          onChange={(e) => handleArrayChange(field, e.target.value)}
+          className="pr-input"
+          rows={2}
+        />
       </div>
     );
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <button onClick={() => router.push('/admin')} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', marginBottom: 8 }}>
-            ← Back to Dashboard
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap');
+
+        .pr-root {
+          min-height: 100vh;
+          background: #070c16;
+          color: #e2e8f0;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .pr-header-band {
+          background: linear-gradient(135deg, #0d1526 0%, #111827 60%, #0a1020 100%);
+          border-bottom: 1px solid rgba(59,130,246,0.15);
+          padding: 28px 40px 24px;
+          position: relative;
+          overflow: hidden;
+        }
+        .pr-back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 11px;
+          color: #3b82f6;
+          text-decoration: none;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          margin-bottom: 20px;
+          transition: color 0.2s;
+          cursor: pointer;
+          background: none; border: none;
+        }
+        .pr-back-link:hover { color: #93c5fd; }
+
+        .pr-patient-name {
+          font-family: 'Syne', sans-serif;
+          font-size: 26px;
+          font-weight: 800;
+          color: #f1f5f9;
+          letter-spacing: -0.02em;
+          line-height: 1.1;
+        }
+
+        .pr-body {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 36px 32px 80px;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+
+        .pr-card {
+          background: #0d1526;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .pr-card-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 16px 22px;
+          background: rgba(255,255,255,0.02);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .pr-card-icon {
+          width: 28px; height: 28px;
+          border-radius: 7px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+
+        .pr-card-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          color: #cbd5e1;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          flex: 1;
+        }
+
+        .pr-card-number {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          color: #334155;
+          letter-spacing: 0.05em;
+        }
+
+        .pr-field-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          padding: 16px;
+          gap: 16px;
+        }
+        @media (max-width: 600px) {
+          .pr-field-grid { grid-template-columns: 1fr; }
+        }
+
+        .pr-field {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .pr-field-label {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 10px;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.07em;
+          margin-bottom: 6px;
+        }
+
+        .pr-input {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px;
+          padding: 10px 14px;
+          color: #e2e8f0;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          transition: all 0.2s;
+          width: 100%;
+        }
+        .pr-input:focus {
+          outline: none;
+          border-color: rgba(59,130,246,0.5);
+          background: rgba(59,130,246,0.05);
+          box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+        .pr-input.read-only {
+          background: transparent;
+          border-color: transparent;
+          color: #94a3b8;
+          padding-left: 0;
+        }
+        .pr-input.read-only:focus {
+          box-shadow: none; border-color: transparent; background: transparent;
+        }
+
+        /* Vaccine Grid specific for editing */
+        .pr-vaccine-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 16px;
+          padding: 16px;
+        }
+
+        /* Action bar */
+        .pr-action-bar {
+          position: fixed;
+          bottom: 0; left: 0; right: 0;
+          background: rgba(10, 15, 26, 0.85);
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(59,130,246,0.2);
+          padding: 16px 32px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          z-index: 100;
+        }
+
+        .btn-cancel {
+          background: transparent;
+          color: #94a3b8;
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #cbd5e1; }
+
+        .btn-save {
+          background: #3b82f6;
+          color: #fff;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 8px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+        }
+        .btn-save:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      `}</style>
+
+      <div className="pr-root">
+        <div className="pr-header-band">
+          <button onClick={() => router.push(`/admin/patient/${patient.id}`)} className="pr-back-link">
+            ← Cancel Editing
           </button>
-          <h1 style={{ fontSize: 24, fontWeight: 600, color: '#f8fafc', margin: 0 }}>
-            {formData.name} <span style={{ color: '#64748b', fontSize: 16 }}>#{formData.id}</span>
-          </h1>
+          <div>
+            <h1 className="pr-patient-name">Editing: {patient.name}</h1>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={generateDocx}
-            style={{
-              background: '#0ea5e9', color: '#fff', border: 'none', padding: '8px 16px',
-              borderRadius: 6, fontWeight: 500, cursor: 'pointer'
-            }}
-          >
-            Export DOCX
+
+        <div className="pr-body" style={{ paddingBottom: 100 }}>
+
+          {/* 1. Patient Characteristics */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>👤</div>
+              <span className="pr-card-title">Patient Characteristics</span>
+              <span className="pr-card-number">01</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderField('Full Name', 'name')}
+              <div className="pr-field">
+                <label className="pr-field-label">Email <span style={{ color: '#64748b', textTransform: 'none' }}>(Read-only from User Auth)</span></label>
+                <input type="text" value={patient.user?.email || 'N/A'} readOnly className="pr-input read-only" />
+              </div>
+              {renderField('Medical Record No.', 'mrn')}
+              {renderField('Contact Phone', 'contactPhone', 'tel')}
+              {renderField('Place of Living', 'placeOfLiving')}
+              {renderField('Referred By', 'referredBy')}
+              {renderField('Date of Birth', 'dateOfBirth')}
+              {renderField('Preferred Language', 'preferredLanguage')}
+            </div>
+          </div>
+
+          {/* 2. Disease Characteristics */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>🧬</div>
+              <span className="pr-card-title">Disease Characteristics</span>
+              <span className="pr-card-number">02</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderField('Primary Diagnosis', 'primaryDiagnosis')}
+              {renderField('Montreal Classification', 'montrealClass')}
+              {renderField('Disease Duration', 'diseaseDuration')}
+              {renderArrayField('Previous Surgeries', 'previousSurgeries')}
+            </div>
+          </div>
+
+          {/* 3. Disease Activity */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(234,179,8,0.12)', color: '#eab308' }}>📊</div>
+              <span className="pr-card-title">Disease Activity & Symptoms</span>
+              <span className="pr-card-number">03</span>
+            </div>
+            <div className="pr-field-grid">
+              <div className="pr-field" style={{ gridColumn: '1/-1' }}>
+                <label className="pr-field-label">Current Disease Activity (e.g. Remission, Mild, Moderate, Severe)</label>
+                <select
+                  value={formData.currentDiseaseActivity || ''}
+                  onChange={(e) => handleChange('currentDiseaseActivity', e.target.value)}
+                  className="pr-input"
+                  style={{ appearance: 'none' }}
+                >
+                  <option value="">Select Activity...</option>
+                  <option value="Remission">Remission</option>
+                  <option value="Mild">Mild</option>
+                  <option value="Moderate">Moderate</option>
+                  <option value="Severe">Severe</option>
+                </select>
+              </div>
+              {renderField('Stool Frequency', 'stoolFrequency')}
+              {renderField('Blood in Stool', 'bloodInStool')}
+              {renderField('Abdominal Pain', 'abdominalPain')}
+              {renderField('Impact on QoL', 'impactOnQoL')}
+              {renderField('Weight Loss', 'weightLoss')}
+            </div>
+          </div>
+
+          {/* 4. Labs & Investigations */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(20,184,166,0.12)', color: '#14b8a6' }}>🔬</div>
+              <span className="pr-card-title">Laboratory & Investigations</span>
+              <span className="pr-card-number">04</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderField('Date of Most Recent Labs', 'dateMostRecentLabs', 'date')}
+              {renderField('Date of Most Recent Colonoscopy', 'dateMostRecentColono', 'date')}
+              <div style={{ gridColumn: '1/-1' }}>{renderField('Recent Lab Values', 'recentLabValues', 'textarea')}</div>
+              <div style={{ gridColumn: '1/-1' }}>{renderField('Colonoscopy Findings', 'colonoscopyFindings', 'textarea')}</div>
+              {renderField('Recent Imaging', 'recentImaging')}
+              {renderField('Most Recent DEXA Scan', 'mostRecentDexa')}
+            </div>
+          </div>
+
+          {/* 5. Current Treatment */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>⚕️</div>
+              <span className="pr-card-title">Current Treatment</span>
+              <span className="pr-card-number">05</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderField('Current IBD Medications', 'currentIbdMedications')}
+              {renderField('Steroid Use', 'steroidUse')}
+              {renderField('TDM Results', 'tdmResults')}
+              <div className="pr-field">
+                <label className="pr-field-label">Response to Treatment</label>
+                <select
+                  value={formData.responseToTreatment || ''}
+                  onChange={(e) => handleChange('responseToTreatment', e.target.value)}
+                  className="pr-input"
+                  style={{ appearance: 'none' }}
+                >
+                  <option value="">Select Response...</option>
+                  <option value="Complete">Complete</option>
+                  <option value="Partial">Partial</option>
+                  <option value="None">None</option>
+                </select>
+              </div>
+              {renderField('Current Supplements', 'currentSupplements')}
+            </div>
+          </div>
+
+          {/* 6. Treatment History */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>💊</div>
+              <span className="pr-card-title">Treatment History</span>
+              <span className="pr-card-number">06</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderArrayField('Previous Treatments Tried', 'previousTreatmentsTried')}
+              <div style={{ gridColumn: '1/-1' }}>{renderField('Failed Treatments Details', 'failedTreatments', 'textarea')}</div>
+            </div>
+          </div>
+
+          {/* 7. Serology */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(236,72,153,0.12)', color: '#ec4899' }}>🩸</div>
+              <span className="pr-card-title">Infection Screening & Serology</span>
+              <span className="pr-card-number">07</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderField('TB Screening', 'tbScreening')}
+              {renderField('HBsAg', 'hepBSurfaceAg')}
+              {renderField('HBsAb', 'hepBSurfaceAb')}
+              {renderField('HBcAb', 'hepBCoreAb')}
+              {renderField('Anti-HCV', 'antiHcv')}
+              {renderField('Anti-HIV', 'antiHiv')}
+            </div>
+          </div>
+
+          {/* 8. Vaccination */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>💉</div>
+              <span className="pr-card-title">Vaccination History</span>
+              <span className="pr-card-number">08</span>
+            </div>
+            <div className="pr-vaccine-grid">
+              {renderField('Influenza', 'influenza')}
+              {renderField('COVID-19', 'covid19')}
+              {renderField('Pneumococcal', 'pneumococcal')}
+              {renderField('Hepatitis B', 'hepatitisB')}
+              {renderField('Hepatitis A', 'hepatitisA')}
+              {renderField('Hepatitis E', 'hepatitisE')}
+              {renderField('Zoster', 'zoster')}
+              {renderField('MMR / Varicella', 'mmrVaricella')}
+              {renderField('Tetanus (Tdap)', 'tetanusTdap')}
+            </div>
+          </div>
+
+          {/* 9. Comorbidities & Final Details */}
+          <div className="pr-card">
+            <div className="pr-card-header">
+              <div className="pr-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>📋</div>
+              <span className="pr-card-title">Comorbidities & Final Details</span>
+              <span className="pr-card-number">09</span>
+            </div>
+            <div className="pr-field-grid">
+              {renderArrayField('Comorbidities', 'comorbidities')}
+              <div style={{ gridColumn: '1/-1' }}>{renderField('Extraintestinal Manifestations', 'extraintestinalManif')}</div>
+              {renderField('Pregnancy Planning', 'pregnancyPlanning')}
+              {renderField('Occupation', 'occupation')}
+              <div style={{ gridColumn: '1/-1' }}>{renderField('Special Considerations', 'specialConsiderations', 'textarea')}</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="pr-action-bar">
+          <button className="btn-cancel" onClick={() => router.push(`/admin/patient/${patient.id}`)} disabled={isSaving}>
+            Cancel
           </button>
-          {isEditing ? (
-            <>
-              <button
-                onClick={() => setIsEditing(false)}
-                style={{
-                  background: 'transparent', color: '#cbd5e1', border: '1px solid #475569', padding: '8px 16px',
-                  borderRadius: 6, fontWeight: 500, cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                style={{
-                  background: '#22c55e', color: '#fff', border: 'none', padding: '8px 16px',
-                  borderRadius: 6, fontWeight: 500, cursor: isSaving ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{
-                background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 16px',
-                borderRadius: 6, fontWeight: 500, cursor: 'pointer'
-              }}
-            >
-              Edit Details
-            </button>
-          )}
+          <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Patient Information</h3>
-          {renderField('Full Name', 'name')}
-          {renderField('MRN', 'mrn')}
-          {renderField('Contact Phone', 'contactPhone')}
-          {renderField('Place of Living', 'placeOfLiving')}
-          {renderField('Referred By', 'referredBy')}
-          {renderField('Date of Birth', 'dateOfBirth')}
-          {renderField('Current Age', 'currentAge', 'number')}
-          {renderField('Age at Diagnosis', 'ageAtDiagnosis', 'number')}
-          {renderField('Sex', 'sex')}
-          {renderField('Preferred Language', 'preferredLanguage')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Disease Characteristics</h3>
-          {renderField('Primary Diagnosis', 'primaryDiagnosis')}
-          {renderField('Montreal Classification', 'montrealClass')}
-          {renderField('Disease Duration', 'diseaseDuration')}
-          {renderField('Previous Surgeries', 'previousSurgeries')}
-          {renderField('Current Disease Activity', 'currentDiseaseActivity')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Symptoms</h3>
-          {renderField('Stool Frequency', 'stoolFrequency')}
-          {renderField('Blood in Stool', 'bloodInStool')}
-          {renderField('Abdominal Pain', 'abdominalPain')}
-          {renderField('Impact on QoL', 'impactOnQoL')}
-          {renderField('Weight Loss', 'weightLoss')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Labs & Imaging</h3>
-          {renderField('Recent Labs Date', 'dateMostRecentLabs')}
-          {renderField('Recent Lab Values', 'recentLabValues')}
-          {renderField('Colonoscopy Date', 'dateMostRecentColono')}
-          {renderField('Colonoscopy Findings', 'colonoscopyFindings')}
-          {renderField('Recent Imaging', 'recentImaging')}
-          {renderField('DEXA Scan', 'mostRecentDexa')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Treatment</h3>
-          {renderField('Current IBD Meds', 'currentIbdMedications')}
-          {renderField('Response to Treatment', 'responseToTreatment')}
-          {renderField('TDM Results', 'tdmResults')}
-          {renderField('Steroid Use', 'steroidUse')}
-          {renderField('Current Supplements', 'currentSupplements')}
-          {renderField('Previous Treatments Tried', 'previousTreatmentsTried')}
-          {renderField('Failed Treatments', 'failedTreatments')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Infection Screening</h3>
-          {renderField('TB Screening', 'tbScreening')}
-          {renderField('Hep B Surface Ag', 'hepBSurfaceAg')}
-          {renderField('Hep B Surface Ab', 'hepBSurfaceAb')}
-          {renderField('Hep B Core Ab', 'hepBCoreAb')}
-          {renderField('Anti-HCV', 'antiHcv')}
-          {renderField('Anti-HIV', 'antiHiv')}
-        </div>
-
-        <div style={{ background: '#1e293b', padding: 20, borderRadius: 12 }}>
-          <h3 style={{ color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: 8, marginBottom: 16 }}>Vaccines</h3>
-          {renderField('Influenza', 'influenza')}
-          {renderField('COVID-19', 'covid19')}
-          {renderField('Pneumococcal', 'pneumococcal')}
-          {renderField('Hepatitis B', 'hepatitisB')}
-          {renderField('Hepatitis A', 'hepatitisA')}
-          {renderField('Hepatitis E', 'hepatitisE')}
-          {renderField('Zoster', 'zoster')}
-          {renderField('MMR/Varicella', 'mmrVaricella')}
-          {renderField('Tetanus/Tdap', 'tetanusTdap')}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
