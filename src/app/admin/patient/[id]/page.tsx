@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
+import PatientActions from '../../../../components/PatientActions';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -13,12 +13,10 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
   }
 
   const { id } = await params;
-  const filePath = path.join(process.cwd(), 'submissions.json');
-  let patients: any[] = [];
-  if (fs.existsSync(filePath)) {
-    patients = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  }
-  const patient = patients.find(p => p.id === parseInt(id, 10));
+  const patient = await prisma.patient.findUnique({
+    where: { id: parseInt(id, 10) },
+    include: { user: true }
+  });
 
   if (!patient) {
     return (
@@ -485,9 +483,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
 
         {/* ── HEADER ── */}
         <div className="pr-header-band">
-          <Link href="/admin" className="pr-back-link">
-            ← Back to Dashboard
-          </Link>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <Link href="/admin" className="pr-back-link" style={{ marginBottom: 0 }}>
+              ← Back to Dashboard
+            </Link>
+            <PatientActions patient={patient} />
+          </div>
 
           <div className="pr-patient-hero">
             <div className="pr-avatar">

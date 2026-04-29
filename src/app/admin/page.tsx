@@ -3,6 +3,7 @@ import path from 'path';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
+import { prisma } from '@/lib/prisma';
 
 export const metadata = {
   title: 'Admin Dashboard - MyGastro.Ai',
@@ -15,12 +16,10 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  const filePath = path.join(process.cwd(), 'submissions.json');
-  let patients: any[] = [];
-  if (fs.existsSync(filePath)) {
-    patients = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  }
-  patients.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const patients = await prisma.patient.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { user: true },
+  });
 
   const totalPatients = patients.length;
   const remissionCount = patients.filter(p => p.currentDiseaseActivity === 'Remission').length;
