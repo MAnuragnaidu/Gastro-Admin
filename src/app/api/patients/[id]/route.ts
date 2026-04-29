@@ -18,9 +18,12 @@ export async function PUT(req: Request, context: any) {
 
     const body = await req.json();
 
+    // Remove protected or relational fields that Prisma cannot directly update this way
+    const { id, user, userId, createdAt, updatedAt, ...updateData } = body;
+
     const updatedPatient = await prisma.patient.update({
       where: { id: patientId },
-      data: body,
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, patient: updatedPatient });

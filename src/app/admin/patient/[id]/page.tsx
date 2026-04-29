@@ -65,6 +65,64 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
     ? new Date(patient.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
 
+  const renderVaccineCard = (name: string, dataStr: string) => {
+    let status = 'unknown';
+    let doses: any[] = [];
+    try {
+      if (dataStr) {
+        const parsed = JSON.parse(dataStr);
+        if (typeof parsed === 'object') {
+          status = parsed.status || 'unknown';
+          doses = Array.isArray(parsed.doses) ? parsed.doses : [];
+        } else {
+          status = dataStr;
+        }
+      }
+    } catch {
+      status = dataStr || 'unknown';
+    }
+
+    let badgeColor = '#94a3b8';
+    let badgeBg = 'rgba(148, 163, 184, 0.12)';
+    let displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+
+    const sLower = status.toLowerCase();
+    if (sLower === 'given' || sLower === 'completed') {
+      badgeColor = '#22c55e';
+      badgeBg = 'rgba(34, 197, 94, 0.12)';
+      displayStatus = 'Completed';
+    } else if (sLower === 'pending') {
+      badgeColor = '#facc15';
+      badgeBg = 'rgba(250, 204, 21, 0.12)';
+      displayStatus = 'Pending';
+    } else if (sLower === 'never' || sLower === 'not taken' || sLower === 'unknown') {
+      badgeColor = '#ef4444';
+      badgeBg = 'rgba(239, 68, 68, 0.12)';
+      displayStatus = sLower === 'unknown' ? 'Unknown' : 'Not Taken';
+    }
+
+    return (
+      <div key={name} className="pr-vaccine-card">
+        <div className="pr-vc-header">
+          <span className="pr-vc-name">{name}</span>
+          <span className="pr-vc-badge" style={{ background: badgeBg, color: badgeColor }}>{displayStatus}</span>
+        </div>
+        {doses.length > 0 ? (
+          <div className="pr-vc-doses">
+            {doses.map((d: any, i: number) => (
+              <div key={i} className="pr-vc-dose-item">
+                <span>Dose {i + 1}: <span style={{ color: '#94a3b8' }}>{d.date || 'N/A'}</span></span>
+                {d.dosage && <span style={{ color: '#38bdf8' }}>{d.dosage}</span>}
+              </div>
+            ))}
+          </div>
+        ) : (
+           <div className="pr-vc-empty">No doses recorded</div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <style>{`
@@ -359,29 +417,63 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
         /* Vaccine grid */
         .pr-vaccine-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 8px;
-          padding: 14px 22px 20px;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 16px;
+          padding: 20px;
         }
-        .pr-vaccine-row {
+        .pr-vaccine-card {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          transition: border-color 0.2s;
+        }
+        .pr-vaccine-card:hover { border-color: rgba(255,255,255,0.12); }
+        .pr-vc-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          background: rgba(255,255,255,0.025);
-          border-radius: 8px;
-          padding: 8px 12px;
+          align-items: flex-start;
           gap: 8px;
         }
-        .pr-vaccine-name {
-          font-size: 12px;
-          color: #94a3b8;
+        .pr-vc-name {
+          font-family: 'Inter', sans-serif;
+          font-weight: 600;
+          color: #f8fafc;
+          font-size: 15px;
+          line-height: 1.3;
         }
-        .pr-vaccine-value {
-          font-family: 'IBM Plex Mono', monospace;
+        .pr-vc-badge {
+          padding: 4px 10px;
+          border-radius: 100px;
           font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          white-space: nowrap;
+        }
+        .pr-vc-doses {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-top: 4px;
+        }
+        .pr-vc-dose-item {
+          display: flex;
+          justify-content: space-between;
+          background: rgba(0,0,0,0.25);
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          color: #cbd5e1;
+        }
+        .pr-vc-empty {
+          font-size: 13px;
           color: #64748b;
-          text-align: right;
-          flex-shrink: 0;
+          font-style: italic;
+          margin-top: auto;
         }
 
         /* ── SIDEBAR ── */
@@ -748,22 +840,15 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                 <span className="pr-card-number">08</span>
               </div>
               <div className="pr-vaccine-grid">
-                {[
-                  { name: 'Influenza', value: patient.influenza },
-                  { name: 'COVID-19', value: patient.covid19 },
-                  { name: 'Pneumococcal', value: patient.pneumococcal },
-                  { name: 'Hepatitis B', value: patient.hepatitisB },
-                  { name: 'Hepatitis A', value: patient.hepatitisA },
-                  { name: 'Hepatitis E', value: patient.hepatitisE },
-                  { name: 'Zoster', value: patient.zoster },
-                  { name: 'MMR / Varicella', value: patient.mmrVaricella },
-                  { name: 'Tetanus (Tdap)', value: patient.tetanusTdap },
-                ].map((v, i) => (
-                  <div className="pr-vaccine-row" key={i}>
-                    <span className="pr-vaccine-name">{v.name}</span>
-                    <span className="pr-vaccine-value">{v.value || '—'}</span>
-                  </div>
-                ))}
+                {renderVaccineCard('Influenza', patient.influenza)}
+                {renderVaccineCard('COVID-19', patient.covid19)}
+                {renderVaccineCard('Pneumococcal', patient.pneumococcal)}
+                {renderVaccineCard('Hepatitis B', patient.hepatitisB)}
+                {renderVaccineCard('Hepatitis A', patient.hepatitisA)}
+                {renderVaccineCard('Hepatitis E', patient.hepatitisE)}
+                {renderVaccineCard('Zoster (Shingrix)', patient.zoster)}
+                {renderVaccineCard('MMR / Varicella', patient.mmrVaricella)}
+                {renderVaccineCard('Tetanus (Tdap)', patient.tetanusTdap)}
               </div>
             </div>
 
