@@ -5,7 +5,7 @@ import { initialFormData, FormData } from './formData';
 import { Step1, Step2, Step3, Step4, Step5, Step6, Step7 } from './StepComponents';
 
 export default function MultiStepForm() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,7 +44,7 @@ export default function MultiStepForm() {
   };
 
   const handleBack = () => {
-    if (currentStep > 1) setCurrentStep((prev) => prev - 1);
+    if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
   const handleSubmit = async () => {
@@ -82,31 +82,57 @@ export default function MultiStepForm() {
     }
   };
 
-  if (!isLoaded) return <div className="text-center">Loading...</div>;
+  if (!isLoaded) return <div className="text-center py-10">Loading...</div>;
 
   if (success) {
     return (
-      <div className="text-center animate-fade-in py-10">
-        <h2 className="text-2xl text-success-color mb-4">Submission Successful!</h2>
-        <p>Thank you for filling out the intake form.</p>
-        <button onClick={() => window.location.href = '/'} className="btn btn-primary mt-6">Return to Home</button>
+      <div className="glass-panel text-center animate-fade-in py-16">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+            <svg className="w-10 h-10" style={{ color: 'var(--success-color)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold mb-4" style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Submission Successful!</h2>
+        <p className="text-lg text-gray-400 mb-8">Thank you for providing your information. Your clinical team will review it shortly.</p>
+        <button onClick={() => window.location.href = '/'} className="btn btn-primary px-8">Return to Home</button>
+      </div>
+    );
+  }
+
+  if (currentStep === 0) {
+    return (
+      <div className="glass-panel text-center animate-fade-in py-12 px-6">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ background: 'rgba(13,148,136,0.15)', border: '1px solid rgba(13,148,136,0.3)' }}>
+            👋
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold mb-4 text-white">Welcome to myGastro.AI</h1>
+        <p className="mb-8 max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+          Please complete this comprehensive questionnaire to help us understand your medical history and current condition. Your data is secure and confidential.
+        </p>
+        <button onClick={() => setCurrentStep(1)} className="btn btn-primary w-full max-w-sm text-lg py-3">
+          Begin Intake Form
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="glass-panel p-6 sm:p-8 animate-fade-in">
+      <div className="mb-6 flex justify-end">
+        <div className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full" style={{ color: 'var(--primary-color)', background: 'rgba(13,148,136,0.1)' }}>
+          Step {currentStep} of {totalSteps}
+        </div>
+      </div>
+
       <div className="wizard-progress">
         {Array.from({ length: totalSteps }).map((_, idx) => {
           const stepNum = idx + 1;
           let className = 'wizard-step';
           if (stepNum === currentStep) className += ' active';
           else if (stepNum < currentStep) className += ' completed';
-          return (
-            <div key={idx} className={className}>
-              {stepNum}
-            </div>
-          );
+          return <div key={idx} className={className}></div>;
         })}
       </div>
 
@@ -122,11 +148,11 @@ export default function MultiStepForm() {
 
       {error && <div className="text-red-500 mt-4 text-center">{error}</div>}
 
-      <div className="flex justify-between mt-8 border-t border-white/10 pt-6">
+      <div className="flex justify-between mt-8 border-t pt-6" style={{ borderColor: 'var(--glass-border)' }}>
         <button
           onClick={handleBack}
-          disabled={currentStep === 1 || isSubmitting}
-          className={`btn ${currentStep === 1 ? 'opacity-50 cursor-not-allowed bg-gray-600' : 'btn-secondary'}`}
+          disabled={isSubmitting}
+          className="btn btn-secondary"
         >
           Back
         </button>
@@ -136,7 +162,7 @@ export default function MultiStepForm() {
           </button>
         ) : (
           <button onClick={handleSubmit} disabled={isSubmitting} className="btn btn-primary">
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? 'Submitting...' : 'Submit Form'}
           </button>
         )}
       </div>

@@ -22,13 +22,18 @@ export default async function Home() {
 
   return (
     <main className="container flex flex-col items-center justify-center min-h-[100vh]">
-      <div className="glass-panel w-full" style={{ maxWidth: '500px' }}>
-        <div className="text-center mb-8">
-          <h1>MyGastro.Ai</h1>
-          <p>Welcome to the Patient Intake Portal</p>
+      <div className="glass-panel w-full" style={{ maxWidth: '420px' }}>
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ background: 'none', WebkitTextFillColor: 'initial', color: '#f8fafc' }}>
+            myGastro<span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>.AI</span>
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>AI-Powered Gastroenterology Platform</p>
         </div>
         <AuthForm />
       </div>
+      <footer className="mt-8 text-center text-xs" style={{ color: '#475569' }}>
+        © 2026 myGastro.AI. Secure & ABHA Compliant.
+      </footer>
     </main>
   );
 }
