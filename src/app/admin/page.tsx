@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
 import { prisma } from '@/lib/prisma';
+import RefreshButton from './RefreshButton';
 
 export const metadata = {
   title: 'Admin Dashboard - MyGastro.Ai',
@@ -40,14 +41,14 @@ export default async function AdminPage() {
 
         .ad-root {
           min-height: 100vh;
-          background: #070c16;
+          background: #ffffff;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          color: #e2e8f0;
+          color: #0f172a;
         }
 
         .ad-nav {
-          background: #0d1526;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          background: #0f172a;
+          border-bottom: 1px solid #1e293b;
           padding: 0 32px;
           height: 56px;
           display: flex;
@@ -57,9 +58,9 @@ export default async function AdminPage() {
         .ad-nav-brand {
           font-size: 15px;
           font-weight: 600;
-          color: #f1f5f9;
+          color: #ffffff;
         }
-        .ad-nav-brand span { color: #3b82f6; }
+        .ad-nav-brand span { color: #2dd4bf; }
         .ad-nav-right {
           display: flex;
           align-items: center;
@@ -67,11 +68,11 @@ export default async function AdminPage() {
         }
         .ad-nav-role {
           font-size: 12px;
-          color: #64748b;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          padding: 3px 10px;
-          border-radius: 4px;
+          color: #94a3b8;
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: 4px 12px;
+          border-radius: 6px;
           font-weight: 500;
         }
 
@@ -84,7 +85,7 @@ export default async function AdminPage() {
         .ad-page-heading {
           font-size: 20px;
           font-weight: 600;
-          color: #f1f5f9;
+          color: #0f172a;
           margin-bottom: 4px;
         }
         .ad-page-sub {
@@ -106,38 +107,40 @@ export default async function AdminPage() {
         }
 
         .ad-stat {
-          background: #0d1526;
-          border: 1px solid rgba(255,255,255,0.07);
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           border-radius: 10px;
           padding: 18px 20px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .ad-stat-label {
           font-size: 12px;
-          color: #475569;
+          color: #64748b;
           font-weight: 500;
           margin-bottom: 6px;
         }
         .ad-stat-value {
           font-size: 28px;
           font-weight: 700;
-          color: #f1f5f9;
+          color: #0f172a;
           line-height: 1;
           margin-bottom: 2px;
         }
         .ad-stat-desc {
           font-size: 11px;
-          color: #334155;
+          color: #94a3b8;
         }
 
         .ad-card {
-          background: #0d1526;
-          border: 1px solid rgba(255,255,255,0.07);
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           border-radius: 10px;
           overflow: hidden;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .ad-card-header {
           padding: 14px 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid #e2e8f0;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -145,7 +148,7 @@ export default async function AdminPage() {
         .ad-card-title {
           font-size: 14px;
           font-weight: 600;
-          color: #e2e8f0;
+          color: #0f172a;
         }
         .ad-card-count {
           font-size: 12px;
@@ -164,20 +167,20 @@ export default async function AdminPage() {
           color: #475569;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          background: rgba(255,255,255,0.02);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
           white-space: nowrap;
         }
         .ad-table tbody tr {
-          border-bottom: 1px solid rgba(255,255,255,0.04);
+          border-bottom: 1px solid #f1f5f9;
           transition: background 0.1s;
         }
         .ad-table tbody tr:last-child { border-bottom: none; }
-        .ad-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+        .ad-table tbody tr:hover { background: #f8fafc; }
         .ad-table td {
           padding: 12px 16px;
           font-size: 13px;
-          color: #94a3b8;
+          color: #475569;
           vertical-align: middle;
         }
 
@@ -185,7 +188,7 @@ export default async function AdminPage() {
         .td-date { font-size: 12px; color: #475569; white-space: nowrap; }
         .td-name {
           font-weight: 500;
-          color: #e2e8f0;
+          color: #0f172a;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -193,8 +196,8 @@ export default async function AdminPage() {
         .td-avatar {
           width: 28px; height: 28px;
           border-radius: 50%;
-          background: rgba(59,130,246,0.15);
-          color: #93c5fd;
+          background: #e0f2fe;
+          color: #0369a1;
           font-size: 12px;
           font-weight: 600;
           display: flex; align-items: center; justify-content: center;
@@ -202,7 +205,7 @@ export default async function AdminPage() {
         }
         .td-mrn { font-size: 12px; color: #475569; }
         .td-email { font-size: 12px; color: #475569; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .td-dx { font-size: 13px; color: #cbd5e1; font-weight: 500; }
+        .td-dx { font-size: 13px; color: #334155; font-weight: 500; }
         .td-activity {
           display: inline-flex;
           align-items: center;
@@ -214,21 +217,21 @@ export default async function AdminPage() {
           white-space: nowrap;
         }
         .td-activity-dot { width: 5px; height: 5px; border-radius: 50%; }
-        .td-age { font-size: 13px; }
+        .td-age { font-size: 13px; color: #334155; }
         .td-view a {
           font-size: 12px;
           font-weight: 500;
-          color: #3b82f6;
+          color: #475569;
           text-decoration: none;
           padding: 5px 12px;
           border-radius: 6px;
-          border: 1px solid rgba(59,130,246,0.25);
-          background: rgba(59,130,246,0.08);
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
           transition: all 0.15s;
           white-space: nowrap;
           display: inline-block;
         }
-        .td-view a:hover { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
+        .td-view a:hover { background: #f1f5f9; color: #0f172a; }
 
         .ad-empty {
           text-align: center;
@@ -240,7 +243,7 @@ export default async function AdminPage() {
 
       <div className="ad-root">
         <nav className="ad-nav">
-          <div className="ad-nav-brand">MyGastro<span>.Ai</span></div>
+          <div className="ad-nav-brand">myGastro<span>.AI</span></div>
           <div className="ad-nav-right">
             <span className="ad-nav-role">Admin</span>
             <LogoutButton />
@@ -276,8 +279,11 @@ export default async function AdminPage() {
 
           <div className="ad-card">
             <div className="ad-card-header">
-              <span className="ad-card-title">All Submissions</span>
-              <span className="ad-card-count">{totalPatients} records</span>
+              <div>
+                <span className="ad-card-title block mb-1">All Submissions</span>
+                <span className="ad-card-count">{totalPatients} records</span>
+              </div>
+              <RefreshButton />
             </div>
             <table className="ad-table">
               <thead>
@@ -329,7 +335,8 @@ export default async function AdminPage() {
                         </td>
                         <td className="td-age">{p.currentAge ? `${p.currentAge} yrs` : '—'}</td>
                         <td className="td-view">
-                          <a href={`/admin/patient/${p.id}`}>View details</a>
+                          <a href={`/admin/patient/${p.id}`} style={{ marginRight: '8px' }}>View details</a>
+                          <a href={`/admin/patient/${p.id}/assessment`} style={{ background: 'rgba(13,148,136,0.08)', borderColor: 'rgba(13,148,136,0.25)', color: '#0d9488' }}>Assessment</a>
                         </td>
                       </tr>
                     );

@@ -34,7 +34,6 @@ export default function AuthForm() {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      // Force a hard refresh to re-evaluate server components (like layout/page)
       window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/form';
     } catch (err: any) {
       setError(err.message);
@@ -45,11 +44,18 @@ export default function AuthForm() {
 
   return (
     <div className="animate-fade-in">
-      {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-200 text-sm">{error}</div>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-200 text-sm">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {!isLogin && (
-          <div className="form-group mb-0">
-            <label className="form-label">Full Name</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <label style={{ fontWeight: 700, color: '#111827', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
+              FULL NAME
+            </label>
             <input
               type="text"
               className="form-input"
@@ -60,8 +66,12 @@ export default function AuthForm() {
             />
           </div>
         )}
-        <div className="form-group mb-0">
-          <label className="form-label">Email ID</label>
+
+        {/* EMAIL ID */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+          <label style={{ fontWeight: 700, color: '#111827', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
+            EMAIL ID
+          </label>
           <input
             type="email"
             className="form-input"
@@ -71,12 +81,17 @@ export default function AuthForm() {
             placeholder="you@example.com"
           />
         </div>
-        <div className="form-group mb-0 relative">
-          <label className="form-label">Password</label>
-          <div className="relative w-full">
+
+        {/* PASSWORD */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+          <label style={{ fontWeight: 700, color: '#111827', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
+            PASSWORD
+          </label>
+          <div style={{ position: 'relative', width: '100%' }}>
             <input
-              type={showPassword ? "text" : "password"}
-              className="form-input pr-10"
+              type={showPassword ? 'text' : 'password'}
+              className="form-input"
+              style={{ width: '100%', paddingRight: '2.5rem', boxSizing: 'border-box' }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -84,40 +99,74 @@ export default function AuthForm() {
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white bg-transparent border-none cursor-pointer"
               onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                color: '#9ca3af',
+              }}
             >
               {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               )}
             </button>
           </div>
         </div>
-        <button type="submit" className="btn btn-primary w-full mt-4" disabled={loading}>
+
+        <button
+          type="submit"
+          className="btn btn-primary w-full"
+          disabled={loading}
+        >
           {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
         </button>
       </form>
-      
-      <div className="mt-8">
-        <div className="relative flex items-center justify-center mb-6">
-          <div className="absolute w-full border-t" style={{ borderColor: 'var(--glass-border)' }}></div>
-          <span className="relative px-3 text-xs" style={{ background: 'var(--surface-card)', color: 'var(--text-muted)' }}>OR</span>
-        </div>
-        <div className="text-center text-sm">
-          <span className="text-muted mr-2">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}
+
+      {/* OR divider */}
+      <div style={{ marginTop: '1.25rem', marginBottom: '1rem' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, borderTop: '1px solid #e5e7eb' }} />
+          <span style={{ padding: '0 0.75rem', fontSize: '0.75rem', color: '#9ca3af', whiteSpace: 'nowrap' }}>
+            OR
           </span>
-          <button
-            className="hover:underline bg-transparent border-none cursor-pointer font-medium"
-            style={{ color: 'var(--primary-color)' }}
-            onClick={() => setIsLogin(!isLogin)}
-            type="button"
-          >
-            {isLogin ? 'Sign Up' : 'Sign In'}
-          </button>
+          <div style={{ flex: 1, borderTop: '1px solid #e5e7eb' }} />
         </div>
+      </div>
+
+      {/* Sign up link */}
+      <div style={{ textAlign: 'center', fontSize: '0.875rem' }}>
+        <span style={{ color: '#6b7280', marginRight: '0.25rem' }}>
+          {isLogin ? "Don't have an account?" : 'Already have an account?'}
+        </span>
+        <button
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 600,
+            color: '#0891b2',
+          }}
+          onClick={() => setIsLogin(!isLogin)}
+          type="button"
+        >
+          {isLogin ? 'Sign Up' : 'Sign In'}
+        </button>
       </div>
     </div>
   );

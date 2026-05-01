@@ -12,7 +12,7 @@ export default function MultiStepForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const totalSteps = 7;
+  const totalSteps = 3;
 
   // Load from local storage
   useEffect(() => {
@@ -140,10 +140,6 @@ export default function MultiStepForm() {
         {currentStep === 1 && <Step1 data={formData} updateData={updateData} />}
         {currentStep === 2 && <Step2 data={formData} updateData={updateData} />}
         {currentStep === 3 && <Step3 data={formData} updateData={updateData} />}
-        {currentStep === 4 && <Step4 data={formData} updateData={updateData} />}
-        {currentStep === 5 && <Step5 data={formData} updateData={updateData} />}
-        {currentStep === 6 && <Step6 data={formData} updateData={updateData} />}
-        {currentStep === 7 && <Step7 data={formData} updateData={updateData} />}
       </div>
 
       {error && <div className="text-red-500 mt-4 text-center">{error}</div>}

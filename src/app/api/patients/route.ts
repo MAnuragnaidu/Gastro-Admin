@@ -69,6 +69,7 @@ export async function POST(req: Request) {
         preferredLanguage: body.preferredLanguage || '',
         occupation: body.occupation || '',
         specialConsiderations: body.specialConsiderations || '',
+        documents: JSON.stringify(body.documents || []),
       }
     });
 

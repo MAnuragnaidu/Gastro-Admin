@@ -3,12 +3,14 @@
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import jsPDF from 'jspdf';
 
 export default function PatientActions({ patient }: { patient: any }) {
   const router = useRouter();
+  const [uploading, setUploading] = useState(false);
 
   const generateDocx = async () => {
-    // Helper to format stringified JSON arrays into clean comma-separated lists
     const parseArray = (str: any) => {
       try {
         const arr = JSON.parse(str || '[]');
@@ -160,17 +162,8 @@ IMPORTANT LANGUAGE INSTRUCTION:
             name: "Normal",
             basedOn: "Normal",
             next: "Normal",
-            run: {
-              font: "Calibri",
-              size: 22, // 11pt
-              color: "1E293B",
-            },
-            paragraph: {
-              spacing: {
-                line: 276, // 1.15 line spacing
-                after: 160, // 8pt after
-              },
-            },
+            run: { font: "Calibri", size: 22, color: "1E293B" },
+            paragraph: { spacing: { line: 276, after: 160 } },
           },
         ],
       },
@@ -178,84 +171,101 @@ IMPORTANT LANGUAGE INSTRUCTION:
         {
           properties: {},
           children: docContent.split('\n').map(line => {
-            // Trim to avoid trailing spaces
             const txt = line.trimEnd();
-            
-            // Empty lines
-            if (!txt) {
-              return new Paragraph({ children: [new TextRun("")] });
-            }
-
-            // Divider lines
+            if (!txt) return new Paragraph({ children: [new TextRun("")] });
             if (txt.includes('═════')) {
-              return new Paragraph({
-                children: [new TextRun({ text: txt, color: "94A3B8" })],
-                spacing: { before: 100, after: 100 }
-              });
+              return new Paragraph({ children: [new TextRun({ text: txt, color: "94A3B8" })], spacing: { before: 100, after: 100 } });
             }
-
-            // Section Headers (All caps, no colon, length > 3)
             if (txt === txt.toUpperCase() && !txt.includes(':') && txt.length > 3) {
-              return new Paragraph({
-                children: [new TextRun({ text: txt, bold: true, size: 24, color: "0F172A" })],
-                spacing: { before: 200, after: 80 }
-              });
+              return new Paragraph({ children: [new TextRun({ text: txt, bold: true, size: 24, color: "0F172A" })], spacing: { before: 200, after: 80 } });
             }
-
-            // Bullet points
             if (txt.startsWith('- ')) {
               const labelContent = txt.substring(2);
               if (labelContent.includes(':')) {
-                 const [label, ...rest] = labelContent.split(':');
-                 return new Paragraph({
-                   bullet: { level: 0 },
-                   children: [
-                     new TextRun({ text: label + ':', bold: true }),
-                     new TextRun({ text: rest.join(':') })
-                   ]
-                 });
+                const [label, ...rest] = labelContent.split(':');
+                return new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: label + ':', bold: true }), new TextRun({ text: rest.join(':') })] });
               }
-              return new Paragraph({
-                bullet: { level: 0 },
-                children: [new TextRun({ text: labelContent })]
-              });
+              return new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: labelContent })] });
             }
-
-            // Key-Value pairs (Label: Value)
             if (txt.includes(':')) {
               const [label, ...rest] = txt.split(':');
-              // Don't bold if it's a very long sentence that just happens to have a colon
               if (label.length < 50) {
-                return new Paragraph({
-                  children: [
-                    new TextRun({ text: label + ':', bold: true }),
-                    new TextRun({ text: rest.join(':') })
-                  ]
-                });
+                return new Paragraph({ children: [new TextRun({ text: label + ':', bold: true }), new TextRun({ text: rest.join(':') })] });
               }
             }
-
-            // Default paragraph
-            return new Paragraph({
-              children: [new TextRun({ text: txt })]
-            });
+            return new Paragraph({ children: [new TextRun({ text: txt })] });
           }),
         },
       ],
     });
 
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `KP-3P_Protocol_${patient.name?.replace(/\\s+/g, '_') || 'Patient'}_${patient.id}.docx`);
+    saveAs(blob, `KP-3P_Protocol_${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.docx`);
+  };
+
+  const handleExportDrive = async () => {
+    setUploading(true);
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('Patient Structured Report', 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Patient Name: ${patient.name || 'Unknown'}`, 14, 30);
+      doc.text(`MRN: ${patient.mrn || 'N/A'}`, 14, 38);
+      doc.text(`Date of Birth: ${patient.dateOfBirth || 'N/A'}`, 14, 46);
+      doc.text(`Diagnosis: ${patient.primaryDiagnosis || 'N/A'}`, 14, 54);
+      doc.text(`Disease Activity: ${patient.currentDiseaseActivity || 'N/A'}`, 14, 62);
+
+      const pdfBlob = doc.output('blob');
+      const file = new File([pdfBlob], `${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.pdf`, { type: 'application/pdf' });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('isExport', 'true');
+
+      const res = await fetch('/api/drive/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to upload to Google Drive');
+
+      if (data.webViewLink) {
+        alert('Successfully exported to Google Drive!\nLink: ' + data.webViewLink);
+        window.open(data.webViewLink, '_blank');
+      } else {
+        alert('Export successful, but no link was returned.');
+      }
+    } catch (err: any) {
+      alert('Error exporting: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div style={{ display: 'flex', gap: '12px' }}>
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <button
+        onClick={handleExportDrive}
+        disabled={uploading}
+        style={{
+          fontSize: 12, padding: '6px 14px', borderRadius: 7,
+          border: '1px solid rgba(255,255,255,0.35)',
+          background: 'rgba(255,255,255,0.08)',
+          color: '#fff', cursor: uploading ? 'not-allowed' : 'pointer',
+          fontWeight: 500, fontFamily: 'Inter, sans-serif',
+          transition: 'all 0.2s', opacity: uploading ? 0.7 : 1,
+        }}
+      >
+        {uploading ? 'Exporting...' : 'Export PDF to Drive'}
+      </button>
       <button
         onClick={generateDocx}
         style={{
-          background: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', border: '1px solid rgba(14, 165, 233, 0.2)',
-          padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-          fontFamily: 'Inter, sans-serif', transition: 'all 0.2s'
+          fontSize: 12, padding: '6px 14px', borderRadius: 7,
+          border: '1px solid rgba(255,255,255,0.35)',
+          background: 'rgba(255,255,255,0.08)',
+          color: '#fff', cursor: 'pointer',
+          fontWeight: 500, fontFamily: 'Inter, sans-serif',
+          transition: 'all 0.2s',
         }}
       >
         Export DOCX
@@ -263,9 +273,10 @@ IMPORTANT LANGUAGE INSTRUCTION:
       <button
         onClick={() => router.push(`/admin/patient/${patient.id}/edit`)}
         style={{
-          background: '#3b82f6', color: '#fff', border: 'none',
-          padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-          fontFamily: 'Inter, sans-serif', transition: 'all 0.2s'
+          fontSize: 12, padding: '6px 14px', borderRadius: 7,
+          border: 'none', background: '#fff', color: '#0f766e',
+          cursor: 'pointer', fontWeight: 700,
+          fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
         }}
       >
         Edit Details

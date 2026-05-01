@@ -22,7 +22,7 @@ export default async function PatientEditPage({ params }: { params: any }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070c16' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff' }}>
       <PatientEditForm patient={patient} />
     </div>
   );

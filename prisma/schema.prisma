@@ -86,6 +86,7 @@ pregnancyPlanning     String
 preferredLanguage     String
 occupation            String
 specialConsiderations String
+documents             String? @default("[]")
 
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt

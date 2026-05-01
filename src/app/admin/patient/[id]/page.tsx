@@ -20,13 +20,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
 
   if (!patient) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0f1a' }}>
-        <p style={{ color: '#94a3b8', fontFamily: 'IBM Plex Mono, monospace' }}>Patient not found</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f1f5f9' }}>
+        <p style={{ color: '#64748b', fontFamily: 'monospace' }}>Patient not found</p>
       </div>
     );
   }
 
-  // Parse array fields
   const parseSurgeries = (() => {
     try { return JSON.parse(patient.previousSurgeries || '[]'); } catch { return []; }
   })();
@@ -43,23 +42,14 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
     Moderate: '#f97316',
     Severe: '#ef4444',
   };
-
-  const severityBg: Record<string, string> = {
-    Remission: 'rgba(34,197,94,0.12)',
-    Mild: 'rgba(250,204,21,0.12)',
-    Moderate: 'rgba(249,115,22,0.12)',
-    Severe: 'rgba(239,68,68,0.12)',
-  };
+  const actColor = activityColor[patient.currentDiseaseActivity] || '#94a3b8';
 
   const labStatusColor = (v: string) => {
-    if (!v || v === '-') return '#64748b';
-    if (v.toLowerCase().includes('negative')) return '#22c55e';
+    if (!v || v === '-') return '#94a3b8';
+    if (v.toLowerCase().includes('negative')) return '#16a34a';
     if (v.toLowerCase().includes('positive')) return '#f97316';
     return '#94a3b8';
   };
-
-  const actColor = activityColor[patient.currentDiseaseActivity] || '#94a3b8';
-  const actBg = severityBg[patient.currentDiseaseActivity] || 'rgba(148,163,184,0.1)';
 
   const createdDate = patient.createdAt
     ? new Date(patient.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -74,50 +64,33 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
         if (typeof parsed === 'object') {
           status = parsed.status || 'unknown';
           doses = Array.isArray(parsed.doses) ? parsed.doses : [];
-        } else {
-          status = dataStr;
-        }
+        } else { status = dataStr; }
       }
-    } catch {
-      status = dataStr || 'unknown';
-    }
+    } catch { status = dataStr || 'unknown'; }
 
-    let badgeColor = '#94a3b8';
-    let badgeBg = 'rgba(148, 163, 184, 0.12)';
-    let displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
-
+    let badgeColor = '#94a3b8', badgeBg = 'rgba(148,163,184,0.12)', displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
     const sLower = status.toLowerCase();
-    if (sLower === 'given' || sLower === 'completed') {
-      badgeColor = '#22c55e';
-      badgeBg = 'rgba(34, 197, 94, 0.12)';
-      displayStatus = 'Completed';
-    } else if (sLower === 'pending') {
-      badgeColor = '#facc15';
-      badgeBg = 'rgba(250, 204, 21, 0.12)';
-      displayStatus = 'Pending';
-    } else if (sLower === 'never' || sLower === 'not taken' || sLower === 'unknown') {
-      badgeColor = '#ef4444';
-      badgeBg = 'rgba(239, 68, 68, 0.12)';
-      displayStatus = sLower === 'unknown' ? 'Unknown' : 'Not Taken';
-    }
+    if (sLower === 'given' || sLower === 'completed') { badgeColor = '#16a34a'; badgeBg = 'rgba(22,163,74,0.1)'; displayStatus = 'Completed'; }
+    else if (sLower === 'pending') { badgeColor = '#d97706'; badgeBg = 'rgba(217,119,6,0.1)'; displayStatus = 'Pending'; }
+    else if (sLower === 'never' || sLower === 'not taken' || sLower === 'unknown') { badgeColor = '#dc2626'; badgeBg = 'rgba(220,38,38,0.1)'; displayStatus = sLower === 'unknown' ? 'Unknown' : 'Not Taken'; }
 
     return (
-      <div key={name} className="pr-vaccine-card">
-        <div className="pr-vc-header">
-          <span className="pr-vc-name">{name}</span>
-          <span className="pr-vc-badge" style={{ background: badgeBg, color: badgeColor }}>{displayStatus}</span>
+      <div key={name} style={{ background: '#f8fafc', border: '0.5px solid #e2e8f0', borderRadius: 10, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+          <span style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{name}</span>
+          <span style={{ background: badgeBg, color: badgeColor, padding: '3px 9px', borderRadius: 100, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{displayStatus}</span>
         </div>
         {doses.length > 0 ? (
-          <div className="pr-vc-doses">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {doses.map((d: any, i: number) => (
-              <div key={i} className="pr-vc-dose-item">
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: '#f1f5f9', padding: '6px 10px', borderRadius: 6, fontSize: 11.5, color: '#475569' }}>
                 <span>Dose {i + 1}: <span style={{ color: '#94a3b8' }}>{d.date || 'N/A'}</span></span>
-                {d.dosage && <span style={{ color: '#38bdf8' }}>{d.dosage}</span>}
+                {d.dosage && <span style={{ color: '#0891b2' }}>{d.dosage}</span>}
               </div>
             ))}
           </div>
         ) : (
-           <div className="pr-vc-empty">No doses recorded</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>No doses recorded</div>
         )}
       </div>
     );
@@ -126,487 +99,200 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
 
-        body {
-          background: #070c16;
-          font-family: 'Inter', sans-serif;
+        .pr-root { min-height: 100vh; background: #f1f5f9; color: #0f172a; }
+
+        /* ── HEADER ── */
+        .pr-header {
+          background: linear-gradient(135deg, #0891b2 0%, #a5f3fc 100%);
+          padding: 0 28px;
         }
 
-        .pr-root {
-          min-height: 100vh;
-          background: #070c16;
-          color: #e2e8f0;
+        /* top nav row */
+        .pr-topnav {
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
-
-        /* ── HEADER BAND ── */
-        .pr-header-band {
-          background: linear-gradient(135deg, #0d1526 0%, #111827 60%, #0a1020 100%);
-          border-bottom: 1px solid rgba(59,130,246,0.15);
-          padding: 28px 40px 24px;
-          position: relative;
-          overflow: hidden;
-        }
-        .pr-header-band::before {
-          content: '';
-          position: absolute;
-          top: -60px; right: -60px;
-          width: 220px; height: 220px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
-          pointer-events: none;
-        }
-
         .pr-back-link {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           font-family: 'IBM Plex Mono', monospace;
           font-size: 11px;
-          color: #3b82f6;
+          color: rgba(255,255,255,0.8);
           text-decoration: none;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.05em;
           text-transform: uppercase;
-          margin-bottom: 20px;
           transition: color 0.2s;
         }
-        .pr-back-link:hover { color: #93c5fd; }
+        .pr-back-link:hover { color: #fff; }
 
-        .pr-patient-hero {
+        /* hero row */
+        .pr-hero {
           display: flex;
           align-items: flex-start;
-          gap: 20px;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 16px 0 0;
           flex-wrap: wrap;
         }
-
+        .pr-hero-patient { display: flex; align-items: center; gap: 14px; }
         .pr-avatar {
-          width: 56px; height: 56px;
+          width: 52px; height: 52px;
           border-radius: 14px;
-          background: linear-gradient(135deg, #1e3a5f, #1e40af);
-          border: 1px solid rgba(59,130,246,0.3);
+          background: #fff;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Syne', sans-serif;
-          font-size: 22px;
-          font-weight: 700;
-          color: #93c5fd;
+          font-size: 22px; font-weight: 700; color: #0f766e;
           flex-shrink: 0;
         }
-
-        .pr-patient-meta { flex: 1; min-width: 0; }
-
-        .pr-patient-name {
-          font-family: 'Syne', sans-serif;
-          font-size: 26px;
-          font-weight: 800;
-          color: #f1f5f9;
-          letter-spacing: -0.02em;
-          line-height: 1.1;
+        .pr-patient-name { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+        .pr-patient-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+        .pr-mono-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.7); }
+        .pr-mono-tag b { color: #fff; }
+        .pr-dot { color: rgba(255,255,255,0.4); font-size: 8px; }
+        .pr-activity-pill {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 3px 10px; border-radius: 20px;
+          font-size: 11px; font-weight: 600;
         }
+        .pr-activity-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        .pr-patient-sub {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-top: 6px;
-          flex-wrap: wrap;
-        }
-
-        .pr-mono-tag {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 11px;
-          color: #64748b;
-          letter-spacing: 0.05em;
-        }
-        .pr-mono-tag span {
-          color: #94a3b8;
-          font-weight: 500;
-        }
-
-        .pr-dot { color: #1e3a5f; font-size: 8px; }
-
-        .pr-status-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 3px 10px;
-          border-radius: 20px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10.5px;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
-        .pr-status-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          display: inline-block;
-        }
-
-        /* ── STATS STRIP ── */
-        .pr-stats-strip {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-top: 18px;
-          padding-top: 18px;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .pr-stat-chip {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 8px;
+        /* chips */
+        .pr-chips-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 14px; }
+        .pr-chip {
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.2);
+          border-bottom: none;
+          border-radius: 10px 10px 0 0;
           padding: 8px 14px;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
+          display: flex; flex-direction: column; gap: 2px;
+          min-width: 80px;
         }
-        .pr-stat-chip-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 9.5px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: 0.07em;
-        }
-        .pr-stat-chip-value {
-          font-family: 'Syne', sans-serif;
-          font-size: 14px;
-          font-weight: 700;
-          color: #cbd5e1;
-        }
+        .pr-chip-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.07em; }
+        .pr-chip-value { font-size: 13px; font-weight: 600; color: #fff; }
 
-        /* ── MAIN LAYOUT ── */
+        /* action buttons */
+        .pr-btn-ghost {
+          font-size: 12px; padding: 6px 14px; border-radius: 7px;
+          border: 1px solid rgba(255,255,255,0.35);
+          background: rgba(255,255,255,0.08);
+          color: #fff; cursor: pointer; font-weight: 500;
+          font-family: 'Inter', sans-serif; transition: all 0.2s;
+        }
+        .pr-btn-ghost:hover { background: rgba(255,255,255,0.15); }
+        .pr-btn-white {
+          font-size: 12px; padding: 6px 14px; border-radius: 7px;
+          border: none; background: #fff; color: #0f766e;
+          cursor: pointer; font-weight: 700;
+          font-family: 'Inter', sans-serif; transition: all 0.2s;
+        }
+        .pr-btn-white:hover { background: #f0fdfa; }
+
+        /* ── BODY ── */
         .pr-body {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 36px 32px 80px;
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 28px;
-          align-items: start;
+          max-width: 1100px; margin: 0 auto;
+          padding: 16px 28px 80px;
+          display: grid; grid-template-columns: 1fr 200px; gap: 14px; align-items: start;
+        }
+        @media (max-width: 860px) {
+          .pr-body { grid-template-columns: 1fr; padding: 14px 16px 60px; }
+          .pr-header { padding: 0 16px; }
         }
 
-        @media (max-width: 900px) {
-          .pr-body { grid-template-columns: 1fr; padding: 24px 16px 60px; }
-          .pr-header-band { padding: 20px 16px 18px; }
-        }
+        /* ── CARD ── */
+        .pr-card { background: #fff; border: 0.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+        .pr-card-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #f8fafc; border-bottom: 0.5px solid #e2e8f0; }
+        .pr-card-icon { width: 25px; height: 25px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+        .pr-card-title { font-size: 10px; font-weight: 700; color: #374151; letter-spacing: 0.07em; text-transform: uppercase; flex: 1; }
+        .pr-card-num { font-size: 10px; color: #cbd5e1; font-family: 'IBM Plex Mono', monospace; }
 
-        /* ── SECTION CARD ── */
-        .pr-card {
-          background: #0d1526;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 16px;
-          overflow: hidden;
-          margin-bottom: 20px;
-        }
+        /* field grid */
+        .pr-field-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 4px 8px 8px; }
+        @media (max-width: 540px) { .pr-field-grid { grid-template-columns: 1fr; } }
+        .pr-field { padding: 7px 8px; border-radius: 7px; transition: background 0.15s; }
+        .pr-field:hover { background: #f8fafc; }
+        .pr-field-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+        .pr-field-value { font-size: 12.5px; color: #0f172a; line-height: 1.4; word-break: break-word; }
+        .pr-field-value.empty { color: #cbd5e1; font-style: italic; }
 
-        .pr-card-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 16px 22px;
-          background: rgba(255,255,255,0.02);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
+        /* tag list */
+        .pr-tag-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+        .pr-tag { background: rgba(59,130,246,0.08); border: 0.5px solid rgba(59,130,246,0.2); color: #3b82f6; font-size: 11px; padding: 2px 8px; border-radius: 5px; }
 
-        .pr-card-icon {
-          width: 28px; height: 28px;
-          border-radius: 7px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px;
-          flex-shrink: 0;
-        }
+        /* serology */
+        .pr-serology-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 10px 12px 12px; }
+        .pr-serology-pill { background: #f8fafc; border: 0.5px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; }
+        .pr-serology-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+        .pr-serology-value { font-size: 12px; font-weight: 600; }
 
-        .pr-card-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          color: #cbd5e1;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          flex: 1;
-        }
+        /* vaccine */
+        .pr-vaccine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; padding: 12px; }
 
-        .pr-card-number {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10px;
-          color: #334155;
-          letter-spacing: 0.05em;
-        }
-
-        /* ── FIELD ROW ── */
-        .pr-field-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          padding: 6px 10px;
-        }
-        @media (max-width: 600px) {
-          .pr-field-grid { grid-template-columns: 1fr; }
-        }
-
-        .pr-field {
-          padding: 10px 12px;
-          border-radius: 8px;
-          transition: background 0.15s;
-        }
-        .pr-field:hover { background: rgba(255,255,255,0.025); }
-
-        .pr-field-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: 0.07em;
-          margin-bottom: 4px;
-        }
-        .pr-field-value {
-          font-family: 'Inter', sans-serif;
-          font-size: 13.5px;
-          color: #cbd5e1;
-          font-weight: 400;
-          line-height: 1.4;
-          word-break: break-word;
-        }
-        .pr-field-value.empty { color: #334155; font-style: italic; }
-
-        /* Tag list */
-        .pr-tag-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 5px;
-          margin-top: 2px;
-        }
-        .pr-tag {
-          background: rgba(59,130,246,0.1);
-          border: 1px solid rgba(59,130,246,0.2);
-          color: #93c5fd;
-          font-size: 11.5px;
-          padding: 2px 9px;
-          border-radius: 5px;
-          font-family: 'Inter', sans-serif;
-        }
-
-        /* Serology pills */
-        .pr-serology-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-          gap: 10px;
-          padding: 14px 22px 20px;
-        }
-        .pr-serology-pill {
-          background: rgba(255,255,255,0.03);
-          border-radius: 10px;
-          border: 1px solid rgba(255,255,255,0.06);
-          padding: 10px 14px;
-        }
-        .pr-serology-pill-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 9.5px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: 0.07em;
-          margin-bottom: 5px;
-        }
-        .pr-serology-pill-value {
-          font-size: 12.5px;
-          font-weight: 500;
-        }
-
-        /* Vaccine grid */
-        .pr-vaccine-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 16px;
-          padding: 20px;
-        }
-        .pr-vaccine-card {
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 12px;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          transition: border-color 0.2s;
-        }
-        .pr-vaccine-card:hover { border-color: rgba(255,255,255,0.12); }
-        .pr-vc-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 8px;
-        }
-        .pr-vc-name {
-          font-family: 'Inter', sans-serif;
-          font-weight: 600;
-          color: #f8fafc;
-          font-size: 15px;
-          line-height: 1.3;
-        }
-        .pr-vc-badge {
-          padding: 4px 10px;
-          border-radius: 100px;
-          font-size: 11px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          white-space: nowrap;
-        }
-        .pr-vc-doses {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          margin-top: 4px;
-        }
-        .pr-vc-dose-item {
-          display: flex;
-          justify-content: space-between;
-          background: rgba(0,0,0,0.25);
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          color: #cbd5e1;
-        }
-        .pr-vc-empty {
-          font-size: 13px;
-          color: #64748b;
-          font-style: italic;
-          margin-top: auto;
-        }
+        /* status badge */
+        .pr-status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .pr-status-dot { width: 6px; height: 6px; border-radius: 50%; }
 
         /* ── SIDEBAR ── */
-        .pr-sidebar {}
-
-        .pr-sidebar-card {
-          background: #0d1526;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px;
-          overflow: hidden;
-          margin-bottom: 16px;
-        }
-        .pr-sidebar-card-header {
-          padding: 12px 16px;
-          background: rgba(255,255,255,0.02);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10px;
-          color: #475569;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-        .pr-sidebar-rows {
-          padding: 8px 0;
-        }
-        .pr-sidebar-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding: 7px 16px;
-          gap: 8px;
-        }
-        .pr-sidebar-row-label {
-          font-size: 11.5px;
-          color: #475569;
-          flex-shrink: 0;
-        }
-        .pr-sidebar-row-value {
-          font-size: 12px;
-          color: #94a3b8;
-          text-align: right;
-          font-weight: 500;
-        }
-
-        .pr-divider {
-          height: 1px;
-          background: rgba(255,255,255,0.05);
-          margin: 0 16px;
-        }
-
-        /* Infection alert */
-        .pr-infection-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 16px;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
+        .pr-sidebar-card { background: #fff; border: 0.5px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+        .pr-sidebar-head { padding: 9px 12px; background: #f8fafc; border-bottom: 0.5px solid #e2e8f0; font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; }
+        .pr-sidebar-big { padding: 14px; text-align: center; }
+        .pr-sidebar-big-val { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+        .pr-sidebar-big-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+        .pr-srow { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-bottom: 0.5px solid #f8fafc; }
+        .pr-srow:last-child { border-bottom: none; }
+        .pr-srow-label { font-size: 11px; color: #64748b; }
+        .pr-srow-val { font-size: 11px; color: #94a3b8; font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
+        .pr-infection-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-bottom: 0.5px solid #f8fafc; }
         .pr-infection-row:last-child { border-bottom: none; }
-        .pr-infection-label { font-size: 12px; color: #64748b; }
-
-        /* Big indicator */
-        .pr-big-indicator {
-          padding: 16px;
-          text-align: center;
-        }
-        .pr-big-indicator-value {
-          font-family: 'Syne', sans-serif;
-          font-size: 32px;
-          font-weight: 800;
-          line-height: 1;
-          margin-bottom: 4px;
-        }
-        .pr-big-indicator-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: 0.07em;
-        }
-        .pr-big-indicator-sub {
-          font-size: 11px;
-          color: #475569;
-          margin-top: 6px;
-        }
-
-        /* Record ID watermark */
-        .pr-record-id {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10.5px;
-          color: #1e293b;
-          padding: 10px 16px;
-          text-align: right;
-          letter-spacing: 0.05em;
-        }
       `}</style>
 
       <div className="pr-root">
 
         {/* ── HEADER ── */}
-        <div className="pr-header-band">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <Link href="/admin" className="pr-back-link" style={{ marginBottom: 0 }}>
-              ← Back to Dashboard
-            </Link>
+        <div className="pr-header">
+
+          {/* top nav */}
+          <div className="pr-topnav">
+            <Link href="/admin" className="pr-back-link">← Back to Dashboard</Link>
             <PatientActions patient={patient} />
           </div>
 
-          <div className="pr-patient-hero">
-            <div className="pr-avatar">
-              {patient.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="pr-patient-meta">
-              <div className="pr-patient-name">{patient.name}</div>
-              <div className="pr-patient-sub">
-                <span className="pr-mono-tag">MRN <span>{patient.mrn || '—'}</span></span>
-                <span className="pr-dot">●</span>
-                <span className="pr-mono-tag">DOB <span>{patient.dateOfBirth || '—'}</span></span>
-                <span className="pr-dot">●</span>
-                <span className="pr-mono-tag">{patient.sex || '—'}</span>
-                <span className="pr-dot">●</span>
-                <div
-                  className="pr-status-badge"
-                  style={{ background: actBg, border: `1px solid ${actColor}30`, color: actColor }}
-                >
-                  <span className="pr-status-dot" style={{ background: actColor }} />
-                  {patient.currentDiseaseActivity || 'Unknown'}
+          {/* hero */}
+          <div className="pr-hero">
+            <div className="pr-hero-patient">
+              <div className="pr-avatar">{patient.name?.charAt(0).toUpperCase()}</div>
+              <div>
+                <div className="pr-patient-name">{patient.name}</div>
+                <div className="pr-patient-meta">
+                  <span className="pr-mono-tag">MRN <b>{patient.mrn || '—'}</b></span>
+                  <span className="pr-dot">●</span>
+                  <span className="pr-mono-tag">DOB <b>{patient.dateOfBirth || '—'}</b></span>
+                  <span className="pr-dot">●</span>
+                  <span className="pr-mono-tag"><b>{patient.sex || '—'}</b></span>
+                  <span className="pr-dot">●</span>
+                  <div
+                    className="pr-activity-pill"
+                    style={{
+                      background: `${actColor}20`,
+                      border: `1px solid ${actColor}40`,
+                      color: actColor,
+                    }}
+                  >
+                    <span className="pr-activity-dot" style={{ background: actColor }} />
+                    {patient.currentDiseaseActivity || 'Unknown'}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pr-stats-strip">
+          {/* chips */}
+          <div className="pr-chips-row">
             {[
               { label: 'Diagnosis', value: patient.primaryDiagnosis || '—' },
               { label: 'Duration', value: patient.diseaseDuration || '—' },
@@ -615,9 +301,9 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               { label: 'Smoking', value: patient.smokingStatus || '—' },
               { label: 'Submitted', value: createdDate },
             ].map((s, i) => (
-              <div className="pr-stat-chip" key={i}>
-                <span className="pr-stat-chip-label">{s.label}</span>
-                <span className="pr-stat-chip-value">{s.value}</span>
+              <div className="pr-chip" key={i}>
+                <span className="pr-chip-label">{s.label}</span>
+                <span className="pr-chip-value">{s.value}</span>
               </div>
             ))}
           </div>
@@ -629,12 +315,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
           {/* LEFT COLUMN */}
           <div>
 
-            {/* 1. Patient Characteristics */}
+            {/* 01 Patient Characteristics */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>👤</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#eff6ff' }}>👤</div>
                 <span className="pr-card-title">Patient Characteristics</span>
-                <span className="pr-card-number">01</span>
+                <span className="pr-card-num">01</span>
               </div>
               <div className="pr-field-grid">
                 {[
@@ -655,17 +341,17 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 2. Disease Characteristics */}
+            {/* 02 Disease Characteristics */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>🧬</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#faf5ff' }}>🧬</div>
                 <span className="pr-card-title">Disease Characteristics</span>
-                <span className="pr-card-number">02</span>
+                <span className="pr-card-num">02</span>
               </div>
               <div className="pr-field-grid">
                 <div className="pr-field">
                   <div className="pr-field-label">Primary Diagnosis</div>
-                  <div className="pr-field-value" style={{ color: '#c084fc', fontWeight: 500 }}>{patient.primaryDiagnosis || '—'}</div>
+                  <div className="pr-field-value" style={{ color: '#7c3aed', fontWeight: 600 }}>{patient.primaryDiagnosis || '—'}</div>
                 </div>
                 <div className="pr-field">
                   <div className="pr-field-label">Disease Duration</div>
@@ -686,20 +372,17 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 3. Disease Activity */}
+            {/* 03 Disease Activity */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(234,179,8,0.12)', color: '#eab308' }}>📊</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#fefce8' }}>📊</div>
                 <span className="pr-card-title">Disease Activity & Symptoms</span>
-                <span className="pr-card-number">03</span>
+                <span className="pr-card-num">03</span>
               </div>
               <div className="pr-field-grid">
                 <div className="pr-field" style={{ gridColumn: '1/-1' }}>
                   <div className="pr-field-label">Current Disease Activity</div>
-                  <div
-                    className="pr-status-badge"
-                    style={{ background: actBg, border: `1px solid ${actColor}30`, color: actColor, marginTop: 4, fontSize: 13 }}
-                  >
+                  <div className="pr-status-badge" style={{ background: `${actColor}15`, border: `1px solid ${actColor}30`, color: actColor, marginTop: 4 }}>
                     <span className="pr-status-dot" style={{ background: actColor }} />
                     {patient.currentDiseaseActivity || '—'}
                   </div>
@@ -719,12 +402,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 4. Labs & Investigations */}
+            {/* 04 Labs */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(20,184,166,0.12)', color: '#14b8a6' }}>🔬</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#f0fdfa' }}>🔬</div>
                 <span className="pr-card-title">Laboratory & Investigations</span>
-                <span className="pr-card-number">04</span>
+                <span className="pr-card-num">04</span>
               </div>
               <div className="pr-field-grid">
                 {[
@@ -743,12 +426,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 5. Current Treatment */}
+            {/* 05 Current Treatment */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>⚕️</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#eff6ff' }}>⚕️</div>
                 <span className="pr-card-title">Current Treatment</span>
-                <span className="pr-card-number">05</span>
+                <span className="pr-card-num">05</span>
               </div>
               <div className="pr-field-grid">
                 <div className="pr-field">
@@ -768,9 +451,9 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                   <div className="pr-field-value">
                     {patient.responseToTreatment
                       ? <span className="pr-status-badge" style={{
-                        background: patient.responseToTreatment === 'Complete' ? 'rgba(34,197,94,0.1)' : 'rgba(250,204,21,0.1)',
-                        border: `1px solid ${patient.responseToTreatment === 'Complete' ? '#22c55e30' : '#facc1530'}`,
-                        color: patient.responseToTreatment === 'Complete' ? '#22c55e' : '#facc15',
+                        background: patient.responseToTreatment === 'Complete' ? 'rgba(22,163,74,0.1)' : 'rgba(217,119,6,0.1)',
+                        border: `1px solid ${patient.responseToTreatment === 'Complete' ? '#16a34a30' : '#d9770630'}`,
+                        color: patient.responseToTreatment === 'Complete' ? '#16a34a' : '#d97706',
                         fontSize: 12,
                       }}>{patient.responseToTreatment}</span>
                       : '—'}
@@ -783,20 +466,20 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 6. Treatment History */}
+            {/* 06 Treatment History */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>💊</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#fff1f2' }}>💊</div>
                 <span className="pr-card-title">Treatment History</span>
-                <span className="pr-card-number">06</span>
+                <span className="pr-card-num">06</span>
               </div>
               <div className="pr-field-grid">
                 <div className="pr-field">
                   <div className="pr-field-label">Previous Treatments Tried</div>
                   <div className="pr-field-value">
                     {parsePreviousTreatments.length > 0
-                      ? <div className="pr-tag-list">{parsePreviousTreatments.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}>{s}</span>)}</div>
-                      : <span style={{ color: '#334155', fontStyle: 'italic' }}>None</span>}
+                      ? <div className="pr-tag-list">{parsePreviousTreatments.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(220,38,38,0.07)', borderColor: 'rgba(220,38,38,0.2)', color: '#dc2626' }}>{s}</span>)}</div>
+                      : <span style={{ color: '#cbd5e1', fontStyle: 'italic' }}>None</span>}
                   </div>
                 </div>
                 <div className="pr-field">
@@ -806,12 +489,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 7. Serology */}
+            {/* 07 Serology */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(236,72,153,0.12)', color: '#ec4899' }}>🩸</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#fff0f9' }}>🩸</div>
                 <span className="pr-card-title">Infection Screening & Serology</span>
-                <span className="pr-card-number">07</span>
+                <span className="pr-card-num">07</span>
               </div>
               <div className="pr-serology-grid">
                 {[
@@ -823,21 +506,19 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                   { label: 'Anti-HIV', value: patient.antiHiv },
                 ].map((s, i) => (
                   <div className="pr-serology-pill" key={i}>
-                    <div className="pr-serology-pill-label">{s.label}</div>
-                    <div className="pr-serology-pill-value" style={{ color: labStatusColor(s.value) }}>
-                      {s.value || '—'}
-                    </div>
+                    <div className="pr-serology-label">{s.label}</div>
+                    <div className="pr-serology-value" style={{ color: labStatusColor(s.value) }}>{s.value || '—'}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 8. Vaccination */}
+            {/* 08 Vaccination */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>💉</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#f0fdf4' }}>💉</div>
                 <span className="pr-card-title">Vaccination History</span>
-                <span className="pr-card-number">08</span>
+                <span className="pr-card-num">08</span>
               </div>
               <div className="pr-vaccine-grid">
                 {renderVaccineCard('Influenza', patient.influenza)}
@@ -852,19 +533,19 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* 9. Comorbidities & Final Details */}
+            {/* 09 Comorbidities */}
             <div className="pr-card">
-              <div className="pr-card-header">
-                <div className="pr-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>📋</div>
+              <div className="pr-card-head">
+                <div className="pr-card-icon" style={{ background: '#eef2ff' }}>📋</div>
                 <span className="pr-card-title">Comorbidities & Final Details</span>
-                <span className="pr-card-number">09</span>
+                <span className="pr-card-num">09</span>
               </div>
               <div className="pr-field-grid">
                 <div className="pr-field">
                   <div className="pr-field-label">Comorbidities</div>
                   <div className="pr-field-value">
                     {parseComorbidities.length > 0
-                      ? <div className="pr-tag-list">{parseComorbidities.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(249,115,22,0.1)', borderColor: 'rgba(249,115,22,0.2)', color: '#fb923c' }}>{s}</span>)}</div>
+                      ? <div className="pr-tag-list">{parseComorbidities.map((s: string, i: number) => <span key={i} className="pr-tag" style={{ background: 'rgba(249,115,22,0.08)', borderColor: 'rgba(249,115,22,0.2)', color: '#ea580c' }}>{s}</span>)}</div>
                       : <span className="empty">None</span>}
                   </div>
                 </div>
@@ -885,110 +566,84 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
           </div>
 
           {/* RIGHT SIDEBAR */}
-          <div className="pr-sidebar">
+          <div>
 
-            {/* Activity meter */}
             <div className="pr-sidebar-card">
-              <div className="pr-sidebar-card-header">Disease Activity</div>
-              <div className="pr-big-indicator">
-                <div className="pr-big-indicator-value" style={{ color: actColor }}>
-                  {patient.currentDiseaseActivity || '—'}
+              <div className="pr-sidebar-head">Disease Activity</div>
+              <div className="pr-sidebar-big">
+                <div className="pr-sidebar-big-val" style={{ color: actColor }}>{patient.currentDiseaseActivity || '—'}</div>
+                <div className="pr-sidebar-big-label">{patient.primaryDiagnosis}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>Montreal: {patient.montrealClass || '—'}</div>
+              </div>
+            </div>
+
+            <div className="pr-sidebar-card">
+              <div className="pr-sidebar-head">Demographics</div>
+              {[
+                { label: 'Age', value: patient.currentAge ? `${patient.currentAge} years` : '—' },
+                { label: 'Age at Dx', value: patient.ageAtDiagnosis ? `${patient.ageAtDiagnosis} years` : '—' },
+                { label: 'Sex', value: patient.sex },
+                { label: 'Smoking', value: patient.smokingStatus },
+                { label: 'Location', value: patient.placeOfLiving },
+                { label: 'Language', value: patient.preferredLanguage },
+                { label: 'Occupation', value: patient.occupation },
+              ].map((r, i) => (
+                <div key={i} className="pr-srow">
+                  <span className="pr-srow-label">{r.label}</span>
+                  <span className="pr-srow-val">{r.value || '—'}</span>
                 </div>
-                <div className="pr-big-indicator-label">{patient.primaryDiagnosis}</div>
-                <div className="pr-big-indicator-sub">Montreal: {patient.montrealClass || '—'}</div>
-              </div>
+              ))}
             </div>
 
-            {/* Quick demographics */}
             <div className="pr-sidebar-card">
-              <div className="pr-sidebar-card-header">Demographics</div>
-              <div className="pr-sidebar-rows">
-                {[
-                  { label: 'Age', value: patient.currentAge ? `${patient.currentAge} years` : '—' },
-                  { label: 'Age at Dx', value: patient.ageAtDiagnosis ? `${patient.ageAtDiagnosis} years` : '—' },
-                  { label: 'Sex', value: patient.sex },
-                  { label: 'Smoking', value: patient.smokingStatus },
-                  { label: 'Location', value: patient.placeOfLiving },
-                  { label: 'Language', value: patient.preferredLanguage },
-                  { label: 'Occupation', value: patient.occupation },
-                ].map((r, i) => (
-                  <div key={i}>
-                    <div className="pr-sidebar-row">
-                      <span className="pr-sidebar-row-label">{r.label}</span>
-                      <span className="pr-sidebar-row-value">{r.value || '—'}</span>
-                    </div>
-                    {i < 6 && <div className="pr-divider" />}
-                  </div>
-                ))}
-              </div>
+              <div className="pr-sidebar-head">Clinical Snapshot</div>
+              {[
+                { label: 'Stool / day', value: patient.stoolFrequency },
+                { label: 'Abdominal Pain', value: patient.abdominalPain },
+                { label: 'Blood in Stool', value: patient.bloodInStool },
+                { label: 'QoL Impact', value: patient.impactOnQoL },
+                { label: 'Weight Loss', value: patient.weightLoss },
+                { label: 'Steroid Use', value: patient.steroidUse },
+              ].map((r, i) => (
+                <div key={i} className="pr-srow">
+                  <span className="pr-srow-label">{r.label}</span>
+                  <span className="pr-srow-val">{r.value || '—'}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Key clinical */}
             <div className="pr-sidebar-card">
-              <div className="pr-sidebar-card-header">Clinical Snapshot</div>
-              <div className="pr-sidebar-rows">
-                {[
-                  { label: 'Stool / day', value: patient.stoolFrequency },
-                  { label: 'Abdominal Pain', value: patient.abdominalPain },
-                  { label: 'Blood in Stool', value: patient.bloodInStool },
-                  { label: 'QoL Impact', value: patient.impactOnQoL },
-                  { label: 'Weight Loss', value: patient.weightLoss },
-                  { label: 'Steroid Use', value: patient.steroidUse },
-                ].map((r, i) => (
-                  <div key={i}>
-                    <div className="pr-sidebar-row">
-                      <span className="pr-sidebar-row-label">{r.label}</span>
-                      <span className="pr-sidebar-row-value">{r.value || '—'}</span>
-                    </div>
-                    {i < 5 && <div className="pr-divider" />}
-                  </div>
-                ))}
-              </div>
+              <div className="pr-sidebar-head">Serology Summary</div>
+              {[
+                { label: 'TB', value: patient.tbScreening },
+                { label: 'HBsAg', value: patient.hepBSurfaceAg },
+                { label: 'Anti-HCV', value: patient.antiHcv },
+                { label: 'Anti-HIV', value: patient.antiHiv },
+              ].map((r, i) => (
+                <div key={i} className="pr-infection-row">
+                  <span style={{ fontSize: 11, color: '#64748b' }}>{r.label}</span>
+                  <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: labStatusColor(r.value) }}>{r.value || '—'}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Infection summary */}
             <div className="pr-sidebar-card">
-              <div className="pr-sidebar-card-header">Serology Summary</div>
-              <div style={{ padding: '4px 0 8px' }}>
-                {[
-                  { label: 'TB', value: patient.tbScreening },
-                  { label: 'HBsAg', value: patient.hepBSurfaceAg },
-                  { label: 'Anti-HCV', value: patient.antiHcv },
-                  { label: 'Anti-HIV', value: patient.antiHiv },
-                ].map((r, i) => (
-                  <div key={i} className="pr-infection-row">
-                    <span className="pr-infection-label">{r.label}</span>
-                    <span style={{
-                      fontFamily: 'IBM Plex Mono, monospace',
-                      fontSize: '11px',
-                      color: labStatusColor(r.value),
-                    }}>{r.value || '—'}</span>
-                  </div>
-                ))}
+              <div className="pr-sidebar-head">Record Info</div>
+              {[
+                { label: 'Patient ID', value: `#${patient.id}` },
+                { label: 'User ID', value: `#${patient.userId}` },
+                { label: 'Submitted', value: createdDate },
+                { label: 'Referred By', value: patient.referredBy },
+                { label: 'Contact', value: patient.contactPhone },
+              ].map((r, i) => (
+                <div key={i} className="pr-srow">
+                  <span className="pr-srow-label">{r.label}</span>
+                  <span className="pr-srow-val">{r.value || '—'}</span>
+                </div>
+              ))}
+              <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, color: '#94a3b8', padding: '8px 12px', textAlign: 'right' }}>
+                REC-{patient.id}-{patient.mrn}
               </div>
-            </div>
-
-            {/* Record meta */}
-            <div className="pr-sidebar-card">
-              <div className="pr-sidebar-card-header">Record Info</div>
-              <div className="pr-sidebar-rows">
-                {[
-                  { label: 'Patient ID', value: `#${patient.id}` },
-                  { label: 'User ID', value: `#${patient.userId}` },
-                  { label: 'Submitted', value: createdDate },
-                  { label: 'Referred By', value: patient.referredBy },
-                  { label: 'Contact', value: patient.contactPhone },
-                ].map((r, i) => (
-                  <div key={i}>
-                    <div className="pr-sidebar-row">
-                      <span className="pr-sidebar-row-label">{r.label}</span>
-                      <span className="pr-sidebar-row-value" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11 }}>{r.value || '—'}</span>
-                    </div>
-                    {i < 4 && <div className="pr-divider" />}
-                  </div>
-                ))}
-              </div>
-              <div className="pr-record-id">REC-{patient.id}-{patient.mrn}</div>
             </div>
 
           </div>

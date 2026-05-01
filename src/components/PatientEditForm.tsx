@@ -91,14 +91,14 @@ export default function PatientEditForm({ patient }: { patient: any }) {
 
         .pr-root {
           min-height: 100vh;
-          background: #070c16;
-          color: #e2e8f0;
+          background: #f8fafc;
+          color: #0f172a;
           font-family: 'Inter', sans-serif;
         }
 
         .pr-header-band {
-          background: linear-gradient(135deg, #0d1526 0%, #111827 60%, #0a1020 100%);
-          border-bottom: 1px solid rgba(59,130,246,0.15);
+          background: linear-gradient(135deg, #0891b2 0%, #a5f3fc 100%);
+          border-bottom: none;
           padding: 28px 40px 24px;
           position: relative;
           overflow: hidden;
@@ -124,7 +124,7 @@ export default function PatientEditForm({ patient }: { patient: any }) {
           font-family: 'Syne', sans-serif;
           font-size: 26px;
           font-weight: 800;
-          color: #f1f5f9;
+          color: #ffffff;
           letter-spacing: -0.02em;
           line-height: 1.1;
         }
@@ -139,10 +139,11 @@ export default function PatientEditForm({ patient }: { patient: any }) {
         }
 
         .pr-card {
-          background: #0d1526;
-          border: 1px solid rgba(255,255,255,0.07);
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           border-radius: 16px;
           overflow: hidden;
+          box-shadow: 0 1px 6px rgba(0,0,0,0.05);
         }
 
         .pr-card-header {
@@ -150,8 +151,8 @@ export default function PatientEditForm({ patient }: { patient: any }) {
           align-items: center;
           gap: 10px;
           padding: 16px 22px;
-          background: rgba(255,255,255,0.02);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
         }
 
         .pr-card-icon {
@@ -166,7 +167,7 @@ export default function PatientEditForm({ patient }: { patient: any }) {
           font-family: 'Syne', sans-serif;
           font-size: 13px;
           font-weight: 700;
-          color: #cbd5e1;
+          color: #374151;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           flex: 1;
@@ -204,11 +205,11 @@ export default function PatientEditForm({ patient }: { patient: any }) {
         }
 
         .pr-input {
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: #f8fafc;
+          border: 1px solid #d1d5db;
           border-radius: 8px;
           padding: 10px 14px;
-          color: #e2e8f0;
+          color: #0f172a;
           font-family: 'Inter', sans-serif;
           font-size: 14px;
           transition: all 0.2s;
@@ -216,9 +217,9 @@ export default function PatientEditForm({ patient }: { patient: any }) {
         }
         .pr-input:focus {
           outline: none;
-          border-color: rgba(59,130,246,0.5);
-          background: rgba(59,130,246,0.05);
-          box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+          border-color: #0891b2;
+          background: rgba(8,145,178,0.04);
+          box-shadow: 0 0 0 2px rgba(8,145,178,0.1);
         }
         .pr-input.read-only {
           background: transparent;
@@ -242,20 +243,21 @@ export default function PatientEditForm({ patient }: { patient: any }) {
         .pr-action-bar {
           position: fixed;
           bottom: 0; left: 0; right: 0;
-          background: rgba(10, 15, 26, 0.85);
+          background: rgba(255,255,255,0.92);
           backdrop-filter: blur(12px);
-          border-top: 1px solid rgba(59,130,246,0.2);
+          border-top: 1px solid #e2e8f0;
           padding: 16px 32px;
           display: flex;
           justify-content: flex-end;
           gap: 12px;
           z-index: 100;
+          box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
         }
 
         .btn-cancel {
-          background: transparent;
-          color: #94a3b8;
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #ffffff;
+          color: #475569;
+          border: 1px solid #cbd5e1;
           padding: 10px 20px;
           border-radius: 8px;
           font-family: 'Inter', sans-serif;
@@ -264,10 +266,10 @@ export default function PatientEditForm({ patient }: { patient: any }) {
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #cbd5e1; }
+        .btn-cancel:hover { background: #f1f5f9; color: #0f172a; }
 
         .btn-save {
-          background: #3b82f6;
+          background: #0d9488;
           color: #fff;
           border: none;
           padding: 10px 24px;
@@ -277,9 +279,9 @@ export default function PatientEditForm({ patient }: { patient: any }) {
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+          box-shadow: 0 4px 12px rgba(13,148,136,0.25);
         }
-        .btn-save:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-save:hover { background: #0f766e; transform: translateY(-1px); }
         .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
       `}</style>
 

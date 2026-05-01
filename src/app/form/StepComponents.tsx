@@ -1,4 +1,5 @@
 import { FormData } from './formData';
+import { useRef, useState } from 'react';
 
 interface StepProps {
   data: FormData;
@@ -49,39 +50,10 @@ const textArea = (name: keyof FormData, label: string, data: FormData, updateDat
   </div>
 );
 
-const checkboxGroup = (name: keyof FormData, label: string, options: string[], data: FormData, updateData: StepProps['updateData']) => {
-  const selected = data[name] as string[];
-  const handleToggle = (opt: string) => {
-    if (selected.includes(opt)) {
-      updateData({ [name]: selected.filter((item) => item !== opt) });
-    } else {
-      updateData({ [name]: [...selected, opt] });
-    }
-  };
-
-  return (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      <div className="form-checkbox-group">
-        {options.map((opt) => (
-          <label key={opt} className="form-checkbox-label">
-            <input
-              type="checkbox"
-              checked={selected.includes(opt)}
-              onChange={() => handleToggle(opt)}
-            />
-            {opt}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 export function Step1({ data, updateData }: StepProps) {
   return (
     <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Patient Characteristics</h2>
+      <h2 className="text-xl mb-4 text-white font-bold">Patient Characteristics</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {textInput('name', 'Name', 'text', data, updateData)}
         {textInput('mrn', 'ID / MRN', 'text', data, updateData)}
@@ -101,74 +73,13 @@ export function Step1({ data, updateData }: StepProps) {
 export function Step2({ data, updateData }: StepProps) {
   return (
     <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Disease Characteristics</h2>
+      <h2 className="text-xl mb-4 text-white font-bold">Medical Profile & Vaccines</h2>
+      
+      <h3 className="text-lg mt-2 mb-2 text-primary-color">Basic Health Info</h3>
       {radioGroup('primaryDiagnosis', 'Primary Diagnosis', ['Ulcerative Colitis', 'Crohns Disease', 'IBD-U'], data, updateData)}
       {radioGroup('diseaseDuration', 'Disease Duration', ['< 1 year', '1-5 years', '5-10 years', '> 10 years'], data, updateData)}
-      {textInput('montrealClass', 'Montreal Classification (UC: E1/E2/E3 | CD: L1-4, B1-3)', 'text', data, updateData)}
-      {checkboxGroup('previousSurgeries', 'Previous IBD Surgeries', ['None', 'Partial Colectomy', 'Total Colectomy', 'Ileo Caecal resection', 'Perianal surgery', 'Stricturoplasty', 'Ostomy', 'Segmental resection'], data, updateData)}
-    </div>
-  );
-}
-
-export function Step3({ data, updateData }: StepProps) {
-  return (
-    <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Disease Activity & Symptoms</h2>
-      {radioGroup('currentDiseaseActivity', 'Current Disease Activity Level', ['Remission', 'Mild', 'Moderate', 'Severe'], data, updateData)}
-      {radioGroup('stoolFrequency', 'Frequency of Stools (per day)', ['1-3', '4-6', '>6'], data, updateData)}
-      {radioGroup('bloodInStool', 'Blood in Stool', ['None', 'Trace', 'Obvious'], data, updateData)}
-      {radioGroup('abdominalPain', 'Abdominal Pain', ['None', 'Mild', 'Moderate', 'Severe'], data, updateData)}
-      {radioGroup('impactOnQoL', 'Impact on Quality of Life', ['None', 'Mild', 'Moderate', 'Severe'], data, updateData)}
-      {radioGroup('weightLoss', 'Weight Loss', ['Yes', 'No'], data, updateData)}
-    </div>
-  );
-}
-
-export function Step4({ data, updateData }: StepProps) {
-  return (
-    <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Laboratory & Investigations</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {textInput('dateMostRecentLabs', 'Date of Most Recent Labs', 'date', data, updateData)}
-        {textInput('dateMostRecentColono', 'Date of Most Recent Colonoscopy', 'date', data, updateData)}
-      </div>
-      {textArea('recentLabValues', 'Recent Lab Values (Hb, TLC, Platelets, CRP, Albumin)', data, updateData)}
-      {textArea('colonoscopyFindings', 'Colonoscopy Findings (Mayo Score)', data, updateData)}
-      {textArea('recentImaging', 'Recent Imaging (MRE, CT, MRI)', data, updateData)}
-      {textInput('mostRecentDexa', 'Most Recent DEXA Scan', 'text', data, updateData)}
-    </div>
-  );
-}
-
-export function Step5({ data, updateData }: StepProps) {
-  return (
-    <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Treatment History</h2>
-      {textArea('currentIbdMedications', 'Current IBD Medications with Duration', data, updateData)}
-      {textArea('failedTreatments', 'Details of Failed Treatments', data, updateData)}
-      {textArea('tdmResults', 'Therapeutic Drug Monitoring Results', data, updateData)}
-      {textArea('currentSupplements', 'Current Vitamin D / Calcium Supplementation', data, updateData)}
-      {radioGroup('responseToTreatment', 'Response to Current Treatment', ['Good', 'Partial', 'None'], data, updateData)}
-      {radioGroup('steroidUse', 'Current or Recent Steroid Use', ['Yes', 'No'], data, updateData)}
-      {checkboxGroup('previousTreatmentsTried', 'Previous IBD Treatments Tried', ['Corticosteroids', 'Infliximab', 'Ustekinumab', 'Vedolizumab', 'Adalimumab', 'Tofacitinib', 'Other'], data, updateData)}
-    </div>
-  );
-}
-
-export function Step6({ data, updateData }: StepProps) {
-  const statusOptions = ['Negative', 'Positive', 'Not Tested'];
-  return (
-    <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Infection Screening & Vaccines</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {radioGroup('tbScreening', 'TB Screening Status', statusOptions, data, updateData)}
-        {radioGroup('hepBSurfaceAg', 'Hep B Surface Antigen', statusOptions, data, updateData)}
-        {radioGroup('hepBSurfaceAb', 'Hep B Surface Antibody', statusOptions, data, updateData)}
-        {radioGroup('hepBCoreAb', 'Hep B Core Antibody', statusOptions, data, updateData)}
-        {radioGroup('antiHcv', 'Anti HCV', statusOptions, data, updateData)}
-        {radioGroup('antiHiv', 'Anti HIV', statusOptions, data, updateData)}
-      </div>
-      <h3 className="text-lg mt-6 mb-2">Vaccination Dates / Status</h3>
+      
+      <h3 className="text-lg mt-6 mb-2 text-primary-color">Vaccination History</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {textInput('influenza', 'Influenza', 'text', data, updateData)}
         {textInput('covid19', 'COVID-19', 'text', data, updateData)}
@@ -184,16 +95,104 @@ export function Step6({ data, updateData }: StepProps) {
   );
 }
 
-export function Step7({ data, updateData }: StepProps) {
+export function Step3({ data, updateData }: StepProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/drive/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const responseData = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(responseData.error || 'Failed to upload to Google Drive');
+      }
+
+      const newDoc = {
+        name: file.name,
+        type: file.type,
+        url: responseData.webViewLink,
+        fileId: responseData.fileId,
+      };
+      
+      const currentDocs = Array.isArray((data as any).documents) ? (data as any).documents : [];
+      updateData({ documents: [...currentDocs, newDoc] } as any);
+    } catch (err: any) {
+      alert("Upload failed: " + err.message + "\n\nMake sure your .env has Google Drive credentials configured.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in">
-      <h2 className="text-xl mb-4">Comorbidities & Final Details</h2>
-      {checkboxGroup('comorbidities', 'Comorbidities', ['None', 'Type 2 Diabetes', 'Hypertension', 'Heart disease', 'CKD', 'Liver disease', 'Osteoporosis', 'Depression/Anxiety'], data, updateData)}
-      {radioGroup('extraintestinalManif', 'Extraintestinal Manifestations', ['None', 'Joints', 'Skin', 'Eyes', 'Other'], data, updateData)}
-      {radioGroup('pregnancyPlanning', 'Pregnancy / Family Planning Status', ['Not applicable', 'Planning', 'Currently pregnant', 'Post-partum'], data, updateData)}
-      {radioGroup('preferredLanguage', "Patient's Preferred Language for Care Plan", ['English', 'Spanish', 'French', 'Other'], data, updateData)}
-      {textInput('occupation', 'Occupation', 'text', data, updateData)}
-      {textArea('specialConsiderations', 'Special Considerations (Travel, Dietary, etc.)', data, updateData)}
+      <h2 className="text-xl mb-4 text-white font-bold">Health Records & Documents</h2>
+      
+      <h3 className="text-lg mt-2 mb-2 text-primary-color">Health Records</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {textInput('dateMostRecentLabs', 'Date of Most Recent Labs', 'date', data, updateData)}
+        {textInput('dateMostRecentColono', 'Date of Most Recent Colonoscopy', 'date', data, updateData)}
+      </div>
+      {textArea('recentLabValues', 'Recent Lab Values (Hb, TLC, Platelets, CRP, Albumin)', data, updateData)}
+      
+      <h3 className="text-lg mt-6 mb-4 text-primary-color border-t border-slate-700 pt-4">Documents (Upload / Camera)</h3>
+      <div className="form-group bg-slate-800/50 p-6 rounded-xl border border-dashed border-teal-500/30">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload}
+            className="hidden" 
+            accept="image/*,application/pdf"
+            capture="environment"
+          />
+          <button 
+            type="button" 
+            onClick={() => fileInputRef.current?.click()}
+            className="btn btn-secondary w-full max-w-xs flex gap-2 items-center justify-center"
+            disabled={uploading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            {uploading ? 'Uploading...' : 'Upload Image or PDF'}
+          </button>
+          
+          {(data as any).documents && (data as any).documents.length > 0 && (
+            <div className="w-full mt-4 text-left">
+              <p className="text-sm font-semibold text-gray-400 mb-2">Attached Documents:</p>
+              <ul className="space-y-2">
+                {(data as any).documents.map((doc: any, i: number) => (
+                  <li key={i} className="flex justify-between items-center bg-slate-800 px-3 py-2 rounded-lg text-sm text-gray-200">
+                    <span className="truncate max-w-[200px]">{doc.name}</span>
+                    <button 
+                      type="button"
+                      className="text-red-400 hover:text-red-300"
+                      onClick={() => {
+                        const newDocs = [...(data as any).documents];
+                        newDocs.splice(i, 1);
+                        updateData({ documents: newDocs } as any);
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

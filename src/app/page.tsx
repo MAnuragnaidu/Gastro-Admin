@@ -24,10 +24,21 @@ export default async function Home() {
     <main className="container flex flex-col items-center justify-center min-h-[100vh]">
       <div className="glass-panel w-full" style={{ maxWidth: '420px' }}>
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ background: 'none', WebkitTextFillColor: 'initial', color: '#f8fafc' }}>
-            myGastro<span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>.AI</span>
+          <h1
+            className="text-3xl font-bold tracking-tight mb-1"
+            style={{
+              background: 'none',
+              WebkitTextFillColor: 'initial',
+              WebkitBackgroundClip: 'unset',
+              color: '#1f2937',
+            }}
+          >
+            <span style={{ color: '#1f2937' }}>myGastro</span>
+            <span style={{ color: '#0891b2' }}>.AI</span>
           </h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>AI-Powered Gastroenterology Platform</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            AI-Powered Gastroenterology Platform
+          </p>
         </div>
         <AuthForm />
       </div>
