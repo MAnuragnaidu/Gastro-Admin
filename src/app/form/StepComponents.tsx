@@ -1,4 +1,4 @@
-import { FormData } from './formData';
+import type { FormData } from './formData';
 import { useRef, useState } from 'react';
 
 interface StepProps {
