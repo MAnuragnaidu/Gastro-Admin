@@ -8,15 +8,15 @@ import {
 } from './AdminAssessmentSteps';
 
 const stepLabels = [
-  "Patient Characteristics",
-  "Medical Profile (Health Info & Vaccines)",
-  "Health Records & Documents",
+  "Basic Info",
+  "Medical Profile",
+  "Health Records",
   "Disease Characteristics",
-  "Disease Activity & Symptoms",
-  "Laboratory & Investigations",
+  "Symptoms",
+  "Investigations",
   "Current Treatment",
   "Treatment History",
-  "Infection Screening & Comorbidities"
+  "Screening"
 ];
 
 const stepHeadings = [
