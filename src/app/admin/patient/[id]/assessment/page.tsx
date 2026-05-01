@@ -24,22 +24,8 @@ export default async function AdminAssessmentPage({ params }: { params: Promise<
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px]">
-      <nav className="bg-white border-b border-slate-200 px-8 h-16 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <div className="font-extrabold text-xl text-slate-900 tracking-tight">
-          myGastro<span className="text-[#0d9488]">.Ai</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-teal-800 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-full font-bold uppercase tracking-wider">
-            Admin
-          </span>
-          <LogoutButton />
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 pb-20">
-        <AssessmentWizard patient={patient} />
-      </div>
+    <div className="min-h-screen w-full bg-white text-slate-900">
+      <AssessmentWizard patient={patient} />
     </div>
   );
 }

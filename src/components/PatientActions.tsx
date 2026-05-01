@@ -1,6 +1,5 @@
 'use client';
 
-import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -10,7 +9,7 @@ export default function PatientActions({ patient }: { patient: any }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
 
-  const generateDocx = async () => {
+  const generatePdf = () => {
     const parseArray = (str: any) => {
       try {
         const arr = JSON.parse(str || '[]');
@@ -151,56 +150,47 @@ IMPORTANT LANGUAGE INSTRUCTION:
 - Use culturally appropriate medical terminology in ${patient.preferredLanguage === 'Telugu' ? 'Telugu' : 'English'}
 - If patient language is English, generate everything in English`;
 
-    const doc = new Document({
-      creator: "MyGastro.Ai",
-      title: `KP-3P Protocol: ${patient.name || 'Patient'}`,
-      description: "Automated Patient Clinical Protocol",
-      styles: {
-        paragraphStyles: [
-          {
-            id: "Normal",
-            name: "Normal",
-            basedOn: "Normal",
-            next: "Normal",
-            run: { font: "Calibri", size: 22, color: "1E293B" },
-            paragraph: { spacing: { line: 276, after: 160 } },
-          },
-        ],
-      },
-      sections: [
-        {
-          properties: {},
-          children: docContent.split('\n').map(line => {
-            const txt = line.trimEnd();
-            if (!txt) return new Paragraph({ children: [new TextRun("")] });
-            if (txt.includes('═════')) {
-              return new Paragraph({ children: [new TextRun({ text: txt, color: "94A3B8" })], spacing: { before: 100, after: 100 } });
-            }
-            if (txt === txt.toUpperCase() && !txt.includes(':') && txt.length > 3) {
-              return new Paragraph({ children: [new TextRun({ text: txt, bold: true, size: 24, color: "0F172A" })], spacing: { before: 200, after: 80 } });
-            }
-            if (txt.startsWith('- ')) {
-              const labelContent = txt.substring(2);
-              if (labelContent.includes(':')) {
-                const [label, ...rest] = labelContent.split(':');
-                return new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: label + ':', bold: true }), new TextRun({ text: rest.join(':') })] });
-              }
-              return new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: labelContent })] });
-            }
-            if (txt.includes(':')) {
-              const [label, ...rest] = txt.split(':');
-              if (label.length < 50) {
-                return new Paragraph({ children: [new TextRun({ text: label + ':', bold: true }), new TextRun({ text: rest.join(':') })] });
-              }
-            }
-            return new Paragraph({ children: [new TextRun({ text: txt })] });
-          }),
-        },
-      ],
-    });
+    const doc = new jsPDF();
+    const margin = 14;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
 
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, `KP-3P_Protocol_${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.docx`);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    const lines = doc.splitTextToSize(docContent, pageWidth - margin * 2);
+    
+    for (let i = 0; i < lines.length; i++) {
+      if (y > pageHeight - 20) {
+        doc.addPage();
+        y = 20;
+      }
+      const line = lines[i];
+      if (line.includes('═════')) {
+         doc.setTextColor(150, 150, 150);
+      } else if (line === line.toUpperCase() && !line.includes(':') && line.length > 3) {
+         doc.setFont('helvetica', 'bold');
+         doc.setTextColor(0, 0, 0);
+         y += 2;
+      } else if (line.includes(':')) {
+         const [label] = line.split(':');
+         if (label === label.toUpperCase()) {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+         } else {
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+         }
+      } else {
+         doc.setFont('helvetica', 'normal');
+         doc.setTextColor(0, 0, 0);
+      }
+      doc.text(line, margin, y);
+      y += 5;
+    }
+
+    doc.save(`KP-3P_Protocol_${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.pdf`);
   };
 
   const handleExportDrive = async () => {
@@ -258,7 +248,7 @@ IMPORTANT LANGUAGE INSTRUCTION:
         {uploading ? 'Exporting...' : 'Export PDF to Drive'}
       </button>
       <button
-        onClick={generateDocx}
+        onClick={generatePdf}
         style={{
           fontSize: 12, padding: '6px 14px', borderRadius: 7,
           border: '1px solid rgba(255,255,255,0.35)',
@@ -268,7 +258,7 @@ IMPORTANT LANGUAGE INSTRUCTION:
           transition: 'all 0.2s',
         }}
       >
-        Export DOCX
+        Export PDF
       </button>
       <button
         onClick={() => router.push(`/admin/patient/${patient.id}/edit`)}
