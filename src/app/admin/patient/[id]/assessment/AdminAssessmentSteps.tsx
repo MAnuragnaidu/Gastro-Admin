@@ -527,7 +527,7 @@ export const AdminStep9 = ({ data, updateData }: any) => (
     <Grid2>
       {radioGroup('extraintestinalManif', 'Extraintestinal Manifestations', ['None', 'Joints', 'Skin', 'Eyes', 'Other'], data, updateData)}
       {radioGroup('pregnancyPlanning', 'Pregnancy / Family Planning Status', ['Not applicable', 'Planning', 'Currently pregnant', 'Post-partum'], data, updateData)}
-      {radioGroup('preferredLanguage', "Patient's Preferred Language for Care Plan", ['English', 'Spanish', 'French', 'Other'], data, updateData)}
+      {checkboxGroup('preferredLanguage', "Patient's Preferred Language for Care Plan", ['English', 'Telugu', 'Hindi', 'Kannada'], data, updateData)}
       {textInput('occupation', 'Occupation', 'text', data, updateData)}
     </Grid2>
     {textArea('specialConsiderations', 'Special Considerations (Travel, Dietary, etc.)', data, updateData)}
