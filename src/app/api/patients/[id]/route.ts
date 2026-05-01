@@ -21,6 +21,19 @@ export async function PUT(req: Request, context: any) {
     // Remove protected or relational fields that Prisma cannot directly update this way
     const { id, user, userId, createdAt, updatedAt, ...updateData } = body;
 
+    if (Array.isArray(updateData.documents)) {
+      updateData.documents = JSON.stringify(updateData.documents);
+    }
+    if (Array.isArray(updateData.previousSurgeries)) {
+      updateData.previousSurgeries = JSON.stringify(updateData.previousSurgeries);
+    }
+    if (Array.isArray(updateData.previousTreatmentsTried)) {
+      updateData.previousTreatmentsTried = JSON.stringify(updateData.previousTreatmentsTried);
+    }
+    if (Array.isArray(updateData.comorbidities)) {
+      updateData.comorbidities = JSON.stringify(updateData.comorbidities);
+    }
+
     const updatedPatient = await prisma.patient.update({
       where: { id: patientId },
       data: updateData,

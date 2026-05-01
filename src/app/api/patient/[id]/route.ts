@@ -28,6 +28,7 @@ export async function PUT(
       previousSurgeries: Array.isArray(data.previousSurgeries) ? JSON.stringify(data.previousSurgeries) : data.previousSurgeries,
       previousTreatmentsTried: Array.isArray(data.previousTreatmentsTried) ? JSON.stringify(data.previousTreatmentsTried) : data.previousTreatmentsTried,
       comorbidities: Array.isArray(data.comorbidities) ? JSON.stringify(data.comorbidities) : data.comorbidities,
+      documents: Array.isArray(data.documents) ? JSON.stringify(data.documents) : data.documents,
       currentAge: Number(data.currentAge) || null,
       ageAtDiagnosis: Number(data.ageAtDiagnosis) || null,
     };
