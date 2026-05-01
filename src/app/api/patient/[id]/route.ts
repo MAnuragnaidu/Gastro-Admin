@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -14,7 +14,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const patientId = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const patientId = parseInt(resolvedParams.id, 10);
     if (isNaN(patientId)) {
       return NextResponse.json({ error: 'Invalid patient ID' }, { status: 400 });
     }

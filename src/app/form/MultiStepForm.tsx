@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { initialFormData, FormData } from './formData';
-import { Step1, Step2, Step3, Step4, Step5, Step6, Step7 } from './StepComponents';
+import { Step1, Step2, Step3 } from './StepComponents';
 
 export default function MultiStepForm() {
   const [currentStep, setCurrentStep] = useState(0);
