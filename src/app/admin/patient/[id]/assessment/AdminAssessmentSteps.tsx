@@ -335,7 +335,7 @@ export const AdminStep3 = ({ data, updateData }: any) => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const res = await fetch('/api/upload', {
+        const res = await fetch('/api/drive/upload', {
           method: 'POST',
           body: formData,
         });
