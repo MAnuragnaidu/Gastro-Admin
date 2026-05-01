@@ -105,6 +105,9 @@ export default async function AdminPage() {
           .ad-page { padding: 20px 16px 40px; }
           .ad-nav { padding: 0 16px; }
         }
+        @media (max-width: 480px) {
+          .ad-stats { grid-template-columns: 1fr; }
+        }
 
         .ad-stat {
           background: #ffffff;
@@ -285,65 +288,67 @@ export default async function AdminPage() {
               </div>
               <RefreshButton />
             </div>
-            <table className="ad-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>Patient Name</th>
-                  <th>MRN</th>
-                  <th>Submitter</th>
-                  <th>Diagnosis</th>
-                  <th>Activity</th>
-                  <th>Age</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.length === 0 ? (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table className="ad-table">
+                <thead>
                   <tr>
-                    <td colSpan={9}>
-                      <div className="ad-empty">No submissions yet.</div>
-                    </td>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Patient Name</th>
+                    <th>MRN</th>
+                    <th>Submitter</th>
+                    <th>Diagnosis</th>
+                    <th>Activity</th>
+                    <th>Age</th>
+                    <th></th>
                   </tr>
-                ) : (
-                  patients.map((p) => {
-                    const act = activityStyles[p.currentDiseaseActivity] || { color: '#475569', bg: '#f1f5f9', border: '#e2e8f0' };
-                    return (
-                      <tr key={p.id}>
-                        <td className="td-id">#{p.id}</td>
-                        <td className="td-date">
-                          {new Date(p.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </td>
-                        <td>
-                          <div className="td-name">
-                            <div className="td-avatar">{p.name?.charAt(0).toUpperCase()}</div>
-                            {p.name}
-                          </div>
-                        </td>
-                        <td className="td-mrn">{p.mrn || '—'}</td>
-                        <td className="td-email" title={p.user?.email}>{p.user?.email || 'Unknown'}</td>
-                        <td className="td-dx">{p.primaryDiagnosis || '—'}</td>
-                        <td>
-                          <span
-                            className="td-activity"
-                            style={{ color: act.color, background: act.bg, border: `1px solid ${act.border}` }}
-                          >
-                            <span className="td-activity-dot" style={{ background: act.color }} />
-                            {p.currentDiseaseActivity || '—'}
-                          </span>
-                        </td>
-                        <td className="td-age">{p.currentAge ? `${p.currentAge} yrs` : '—'}</td>
-                        <td className="td-view">
-                          <a href={`/admin/patient/${p.id}`} style={{ marginRight: '8px' }}>View details</a>
-                          <a href={`/admin/patient/${p.id}/assessment`} style={{ background: 'rgba(13,148,136,0.08)', borderColor: 'rgba(13,148,136,0.25)', color: '#0d9488' }}>Assessment</a>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {patients.length === 0 ? (
+                    <tr>
+                      <td colSpan={9}>
+                        <div className="ad-empty">No submissions yet.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    patients.map((p) => {
+                      const act = activityStyles[p.currentDiseaseActivity] || { color: '#475569', bg: '#f1f5f9', border: '#e2e8f0' };
+                      return (
+                        <tr key={p.id}>
+                          <td className="td-id">#{p.id}</td>
+                          <td className="td-date">
+                            {new Date(p.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td>
+                            <div className="td-name">
+                              <div className="td-avatar">{p.name?.charAt(0).toUpperCase()}</div>
+                              {p.name}
+                            </div>
+                          </td>
+                          <td className="td-mrn">{p.mrn || '—'}</td>
+                          <td className="td-email" title={p.user?.email}>{p.user?.email || 'Unknown'}</td>
+                          <td className="td-dx">{p.primaryDiagnosis || '—'}</td>
+                          <td>
+                            <span
+                              className="td-activity"
+                              style={{ color: act.color, background: act.bg, border: `1px solid ${act.border}` }}
+                            >
+                              <span className="td-activity-dot" style={{ background: act.color }} />
+                              {p.currentDiseaseActivity || '—'}
+                            </span>
+                          </td>
+                          <td className="td-age">{p.currentAge ? `${p.currentAge} yrs` : '—'}</td>
+                          <td className="td-view">
+                            <a href={`/admin/patient/${p.id}`} style={{ marginRight: '8px' }}>View details</a>
+                            <a href={`/admin/patient/${p.id}/assessment`} style={{ background: 'rgba(13,148,136,0.08)', borderColor: 'rgba(13,148,136,0.25)', color: '#0d9488' }}>Assessment</a>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

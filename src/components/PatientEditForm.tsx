@@ -283,6 +283,18 @@ export default function PatientEditForm({ patient }: { patient: any }) {
         }
         .btn-save:hover { background: #0f766e; transform: translateY(-1px); }
         .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        @media (max-width: 768px) {
+          .pr-header-band { padding: 20px 24px; }
+          .pr-body { padding: 20px 24px 80px; gap: 20px; }
+          .pr-action-bar { padding: 12px 24px; }
+        }
+        @media (max-width: 480px) {
+          .pr-header-band { padding: 16px; }
+          .pr-body { padding: 16px 16px 80px; gap: 16px; }
+          .pr-vaccine-grid { grid-template-columns: 1fr; }
+          .pr-action-bar { padding: 12px 16px; flex-wrap: wrap; justify-content: space-between; }
+          .btn-cancel, .btn-save { flex: 1; text-align: center; }
+        }
       `}</style>
 
       <div className="pr-root">

@@ -113,7 +113,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
 
         /* top nav row */
         .pr-topnav {
-          height: 44px;
+          padding: 16px 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -121,16 +121,22 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
         .pr-back-link {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 11px;
-          color: rgba(255,255,255,0.8);
+          gap: 6px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          color: #0f766e;
+          background: #ffffff;
+          padding: 8px 16px;
+          border-radius: 8px;
           text-decoration: none;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          transition: color 0.2s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transition: all 0.2s;
         }
-        .pr-back-link:hover { color: #fff; }
+        .pr-back-link:hover { 
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
 
         /* hero row */
         .pr-hero {
@@ -232,6 +238,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
 
         /* vaccine */
         .pr-vaccine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; padding: 12px; }
+        @media (max-width: 380px) { .pr-vaccine-grid { grid-template-columns: 1fr; } }
 
         /* status badge */
         .pr-status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }

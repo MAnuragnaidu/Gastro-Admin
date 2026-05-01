@@ -111,7 +111,25 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex flex-col min-h-screen w-full bg-white overflow-hidden">
+    <>
+      <style>{`
+        .aw-layout { flex-direction: row; }
+        .aw-sidebar { width: 250px; display: flex; }
+        .aw-main { padding: 32px 40px; }
+        .aw-stepper { justify-content: space-between; }
+        .aw-bottom-nav { flex-direction: row; }
+        
+        @media (max-width: 768px) {
+          .aw-layout { flex-direction: column; }
+          .aw-sidebar { width: 100%; padding: 16px; }
+          .aw-sidebar-desc, .aw-sidebar-steps, .aw-sidebar-footer { display: none; }
+          .aw-main { padding: 16px; }
+          .aw-stepper { overflow-x: auto; padding-bottom: 16px; margin-bottom: 16px; justify-content: flex-start; gap: 20px; }
+          .aw-bottom-nav { flex-direction: column; gap: 12px; }
+          .aw-bottom-nav button { width: 100%; margin-left: 0 !important; }
+        }
+      `}</style>
+      <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex flex-col min-h-screen w-full bg-white overflow-hidden">
 
       {/* ── TOP NAV BAR ── */}
       <div style={{
@@ -157,15 +175,13 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
       </div>
 
       {/* ── BODY: sidebar + main ── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="aw-layout" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── LEFT SIDEBAR ── */}
-        <div style={{
-          width: 250,
+        <div className="aw-sidebar" style={{
           flexShrink: 0,
           background: 'linear-gradient(135deg, #0891b2 0%, #a5f3fc 100%)',
           padding: '0 20px 20px 20px',
-          display: 'flex',
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
@@ -189,7 +205,7 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
             </span>
           </div>
 
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11.5, lineHeight: 1.6, marginBottom: 20, position: 'relative', zIndex: 1, fontFamily: "'Inter', sans-serif" }}>
+          <p className="aw-sidebar-desc" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11.5, lineHeight: 1.6, marginBottom: 20, position: 'relative', zIndex: 1, fontFamily: "'Inter', sans-serif" }}>
             9 Steps to complete the patient assessment
           </p>
 
@@ -207,7 +223,7 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
           </div>
 
           {/* Step list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, position: 'relative', zIndex: 1 }}>
+          <div className="aw-sidebar-steps" style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, position: 'relative', zIndex: 1 }}>
             {stepLabels.map((label, idx) => {
               const stepNum = idx + 1;
               const isActive = stepNum === currentStep;
@@ -242,7 +258,7 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
           </div>
 
           {/* Footer */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 12, marginTop: 12, position: 'relative', zIndex: 1 }}>
+          <div className="aw-sidebar-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 12, marginTop: 12, position: 'relative', zIndex: 1 }}>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11, fontFamily: "'Inter', sans-serif" }}>
               Step <span style={{ color: '#ffffff', fontWeight: 700 }}>{currentStep}</span> of {totalSteps}
             </p>
@@ -250,10 +266,10 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
         </div>
 
         {/* ── RIGHT MAIN PANEL ── */}
-        <div style={{ flex: 1, padding: '32px 40px', display: 'flex', flexDirection: 'column', background: '#fafafa', minWidth: 0, overflowY: 'auto' }}>
+        <div className="aw-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fafafa', minWidth: 0, overflowY: 'auto' }}>
 
           {/* Horizontal step indicator */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 24, borderBottom: '0.5px solid #e2e8f0', position: 'relative' }}>
+          <div className="aw-stepper" style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 24, borderBottom: '0.5px solid #e2e8f0', position: 'relative' }}>
             <div style={{ position: 'absolute', top: 15, left: 30, right: 30, height: 2, background: '#e2e8f0', zIndex: 0 }} />
             {stepLabels.map((label, idx) => {
               const stepNum = idx + 1;
@@ -313,7 +329,7 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
           {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>{error}</p>}
 
           {/* Bottom navigation */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingTop: 20, borderTop: '0.5px solid #e2e8f0' }}>
+          <div className="aw-bottom-nav" style={{ display: 'flex', alignItems: 'center', paddingTop: 20, borderTop: '0.5px solid #e2e8f0' }}>
             {currentStep > 1 && (
               <button onClick={handleBack} disabled={isSubmitting} style={{
                 padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
@@ -422,5 +438,6 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
         </div>
       )}
     </div>
+    </>
   );
 }

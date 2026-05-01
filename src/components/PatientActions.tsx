@@ -2,24 +2,35 @@
 
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
 
 export default function PatientActions({ patient }: { patient: any }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const generatePdf = () => {
-    const parseArray = (str: any) => {
-      try {
-        const arr = JSON.parse(str || '[]');
-        return Array.isArray(arr) && arr.length > 0 ? arr.join(', ') : 'None';
-      } catch {
-        return str || 'None';
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
       }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    const docContent = `Generate complete KP-3P protocol for:
+  const parseArray = (str: any) => {
+    try {
+      const arr = JSON.parse(str || '[]');
+      return Array.isArray(arr) && arr.length > 0 ? arr.join(', ') : 'None';
+    } catch {
+      return str || 'None';
+    }
+  };
+
+  const docContent = `Generate complete KP-3P protocol for:
 
 ═══════════════════════════════════════
 PATIENT INFORMATION
@@ -150,6 +161,7 @@ IMPORTANT LANGUAGE INSTRUCTION:
 - Use culturally appropriate medical terminology in ${patient.preferredLanguage === 'Telugu' ? 'Telugu' : 'English'}
 - If patient language is English, generate everything in English`;
 
+  const generatePdf = () => {
     const doc = new jsPDF();
     const margin = 14;
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -193,6 +205,19 @@ IMPORTANT LANGUAGE INSTRUCTION:
     doc.save(`KP-3P_Protocol_${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.pdf`);
   };
 
+  const generateDocx = () => {
+    const htmlContent = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Export DOC</title></head>
+      <body style="font-family: Arial, sans-serif;">
+        ${docContent.replace(/\n/g, '<br>')}
+      </body>
+      </html>
+    `;
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    saveAs(blob, `KP-3P_Protocol_${patient.name?.replace(/\s+/g, '_') || 'Patient'}_${patient.id}.doc`);
+  };
+
   const handleExportDrive = async () => {
     setUploading(true);
     try {
@@ -233,33 +258,56 @@ IMPORTANT LANGUAGE INSTRUCTION:
 
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-      <button
-        onClick={handleExportDrive}
-        disabled={uploading}
-        style={{
-          fontSize: 12, padding: '6px 14px', borderRadius: 7,
-          border: '1px solid rgba(255,255,255,0.35)',
-          background: 'rgba(255,255,255,0.08)',
-          color: '#fff', cursor: uploading ? 'not-allowed' : 'pointer',
-          fontWeight: 500, fontFamily: 'Inter, sans-serif',
-          transition: 'all 0.2s', opacity: uploading ? 0.7 : 1,
-        }}
-      >
-        {uploading ? 'Exporting...' : 'Export PDF to Drive'}
-      </button>
-      <button
-        onClick={generatePdf}
-        style={{
-          fontSize: 12, padding: '6px 14px', borderRadius: 7,
-          border: '1px solid rgba(255,255,255,0.35)',
-          background: 'rgba(255,255,255,0.08)',
-          color: '#fff', cursor: 'pointer',
-          fontWeight: 500, fontFamily: 'Inter, sans-serif',
-          transition: 'all 0.2s',
-        }}
-      >
-        Export PDF
-      </button>
+      <div style={{ position: 'relative' }} ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            fontSize: 12, padding: '6px 14px', borderRadius: 7,
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'rgba(255,255,255,0.08)',
+            color: '#fff', cursor: 'pointer',
+            fontWeight: 500, fontFamily: 'Inter, sans-serif',
+            transition: 'all 0.2s',
+          }}
+        >
+          Export ▼
+        </button>
+        {showDropdown && (
+          <div style={{
+            position: 'absolute', right: 0, top: '100%', marginTop: '6px',
+            background: '#ffffff', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            overflow: 'hidden', zIndex: 50, minWidth: 160,
+            display: 'flex', flexDirection: 'column'
+          }}>
+            <button
+              onClick={() => { setShowDropdown(false); generatePdf(); }}
+              style={{ padding: '10px 16px', fontSize: 13, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', color: '#334155' }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+            >
+              Export as PDF
+            </button>
+            <button
+              onClick={() => { setShowDropdown(false); generateDocx(); }}
+              style={{ padding: '10px 16px', fontSize: 13, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', color: '#334155' }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+            >
+              Export as DOCX
+            </button>
+            <button
+              onClick={() => { setShowDropdown(false); handleExportDrive(); }}
+              disabled={uploading}
+              style={{ padding: '10px 16px', fontSize: 13, textAlign: 'left', background: 'none', border: 'none', cursor: uploading ? 'not-allowed' : 'pointer', color: '#334155', opacity: uploading ? 0.6 : 1 }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+            >
+              {uploading ? 'Exporting to Drive...' : 'Export PDF to Drive'}
+            </button>
+          </div>
+        )}
+      </div>
       <button
         onClick={() => router.push(`/admin/patient/${patient.id}/edit`)}
         style={{
