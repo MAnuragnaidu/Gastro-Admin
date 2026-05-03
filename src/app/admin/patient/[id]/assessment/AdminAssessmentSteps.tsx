@@ -191,6 +191,7 @@ export const AdminStep1 = ({ data, updateData }: any) => {
     <div>
       <Grid2>
         {textInput('name', 'Name', 'text', data, updateData)}
+        {textInput('email', 'Email', 'email', data, updateData)}
         {textInput('mrn', 'ID / MRN', 'text', data, updateData)}
         {textInput('contactPhone', 'Contact Phone', 'text', data, updateData)}
         {textInput('placeOfLiving', 'Place of Living', 'text', data, updateData)}
@@ -204,10 +205,12 @@ export const AdminStep1 = ({ data, updateData }: any) => {
   );
 };
 
+type VaccineDose = { date?: string; dosage?: string };
+
 // Parses vaccine field which may be a JSON object {status, doses} or plain string
-const parseVaccine = (val: any): { status: string; doses: { date: string }[] } => {
+const parseVaccine = (val: any): { status: string; doses: VaccineDose[] } => {
   if (!val) return { status: '', doses: [] };
-  if (typeof val === 'object' && val !== null) return { status: val.status || '', doses: val.doses || [] };
+  if (typeof val === 'object' && val !== null) return { status: val.status || '', doses: Array.isArray(val.doses) ? val.doses : [] };
   if (typeof val === 'string') {
     try { return JSON.parse(val); } catch { return { status: val, doses: [] }; }
   }
@@ -222,14 +225,14 @@ const VaccineInput = ({ name, label, data, updateData }: { name: string; label: 
     updateData({ [name]: { ...vaccine, ...patch } });
   };
 
-  const updateDoseDate = (i: number, date: string) => {
+  const updateDoseField = (i: number, field: keyof VaccineDose, value: string) => {
     const doses = [...(vaccine.doses || [])];
-    doses[i] = { ...doses[i], date };
+    doses[i] = { ...doses[i], [field]: value };
     updateVaccine({ doses });
   };
 
   const addDose = () => {
-    updateVaccine({ doses: [...(vaccine.doses || []), { date: '' }] });
+    updateVaccine({ doses: [...(vaccine.doses || []), { date: '', dosage: '' }] });
   };
 
   const removeDose = (i: number) => {
@@ -258,20 +261,39 @@ const VaccineInput = ({ name, label, data, updateData }: { name: string; label: 
           );
         })}
       </div>
-      {/* Dose dates — only show if Given */}
+      {/* Dose date + dosage (matches patient intake Step8Vaccination) — only if Given */}
       {vaccine.status?.toLowerCase() === 'given' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {(vaccine.doses || []).map((dose: any, i: number) => (
-            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input
-                type="date"
-                value={dose.date ? dose.date.substring(0, 10) : ''}
-                onChange={(e) => updateDoseDate(i, e.target.value)}
-                style={{ ...inputStyle, fontSize: 12, padding: '7px 10px', flex: 1 }}
-              />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(vaccine.doses || []).map((dose: VaccineDose, i: number) => (
+            <div
+              key={i}
+              style={{
+                display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end',
+                padding: '10px 10px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fafafa',
+              }}
+            >
+              <div style={{ flex: '1 1 140px', minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b', fontFamily: inter, letterSpacing: '0.06em' }}>DATE</span>
+                <input
+                  type="date"
+                  value={dose.date ? String(dose.date).substring(0, 10) : ''}
+                  onChange={(e) => updateDoseField(i, 'date', e.target.value)}
+                  style={{ ...inputStyle, fontSize: 12, padding: '7px 10px', width: '100%', marginTop: 4 }}
+                />
+              </div>
+              <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b', fontFamily: inter, letterSpacing: '0.06em' }}>DOSAGE / BRAND / TYPE</span>
+                <input
+                  type="text"
+                  value={dose.dosage ?? ''}
+                  onChange={(e) => updateDoseField(i, 'dosage', e.target.value)}
+                  placeholder="e.g. 0.5 mL IM"
+                  style={{ ...inputStyle, fontSize: 12, padding: '7px 10px', width: '100%', marginTop: 4 }}
+                />
+              </div>
               <button type="button" onClick={() => removeDose(i)} style={{
                 background: '#fff1f2', border: '1px solid #fecdd3', color: '#e11d48',
-                borderRadius: 7, padding: '6px 10px', fontSize: 12, cursor: 'pointer', fontFamily: inter,
+                borderRadius: 7, padding: '8px 10px', fontSize: 12, cursor: 'pointer', fontFamily: inter, flexShrink: 0,
               }}>✕</button>
             </div>
           ))}
@@ -280,7 +302,7 @@ const VaccineInput = ({ name, label, data, updateData }: { name: string; label: 
             background: '#f0fdfa', border: '1px solid #99f6e4', color: '#0f766e',
             borderRadius: 7, cursor: 'pointer', fontFamily: inter, textAlign: 'left',
           }}>
-            + Add dose date
+            + Add dose
           </button>
         </div>
       )}
@@ -302,7 +324,17 @@ const vaccineFields = [
 
 export const AdminStep2 = ({ data, updateData }: any) => (
   <div>
-    {radioGroup('smokingStatus', 'Smoking Status', ['Current', 'Former', 'Never'], data, updateData)}
+    {radioGroup('smokingStatus', 'Smoking Status', ['Current smoker', 'Ex smoker', 'Never smoked'], data, updateData)}
+    {(data.smokingStatus === 'Current smoker' || data.smokingStatus === 'Ex smoker') && (
+      <div style={{ marginTop: 20 }}>
+        {textArea(
+          'smokingDetails',
+          'Smoking amount (e.g. packs per day, cigarettes/day, pack-years)',
+          data,
+          updateData,
+        )}
+      </div>
+    )}
     <div style={{ marginTop: 24 }}>
       <Divider label="Vaccination History" />
       <Grid3>
@@ -457,11 +489,22 @@ export const AdminStep3 = ({ data, updateData }: any) => {
   );
 };
 
+// Must match mygastro-patient Step2DiseaseChar so imported values show as selected.
+const PATIENT_PRIMARY_DIAGNOSIS = ['Ulcerative Colitis', "Crohn's Disease", 'IBD-U'] as const;
+const PATIENT_DISEASE_DURATIONS = [
+  '<3 months',
+  '3–12 months',
+  '1–2 years',
+  '2–5 years',
+  '5–10 years',
+  '>10 years',
+] as const;
+
 export const AdminStep4 = ({ data, updateData }: any) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
     <Grid2>
-      {radioGroup('primaryDiagnosis', 'Primary Diagnosis', ['Ulcerative Colitis', 'Crohns Disease', 'IBD-U'], data, updateData)}
-      {radioGroup('diseaseDuration', 'Disease Duration', ['< 1 year', '1-5 years', '5-10 years', '> 10 years'], data, updateData)}
+      {radioGroup('primaryDiagnosis', 'Primary Diagnosis', [...PATIENT_PRIMARY_DIAGNOSIS], data, updateData)}
+      {radioGroup('diseaseDuration', 'Disease Duration', [...PATIENT_DISEASE_DURATIONS], data, updateData)}
     </Grid2>
     {textInput('montrealClass', 'Montreal Classification (UC: E1/E2/E3 | CD: L1-4, B1-3)', 'text', data, updateData)}
     {checkboxGroup('previousSurgeries', 'Previous IBD Surgeries', ['None', 'Partial Colectomy', 'Total Colectomy', 'Ileo Caecal resection', 'Perianal surgery', 'Stricturoplasty', 'Ostomy', 'Segmental resection'], data, updateData)}

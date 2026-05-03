@@ -10,6 +10,7 @@ export const initialFormData = {
   ageAtDiagnosis: '',
   sex: '',
   smokingStatus: '',
+  smokingDetails: '',
 
   // Step 2
   primaryDiagnosis: '',

@@ -25,6 +25,7 @@ export async function GET() {
         data: {
           id: patient.id,
           name: patient.name || '',
+          email: typeof patient.email === 'string' ? patient.email.trim() : '',
           mrn: patient.mrn || '',
           contactPhone: patient.contactPhone || '',
           placeOfLiving: patient.placeOfLiving || '',
@@ -34,6 +35,7 @@ export async function GET() {
           ageAtDiagnosis: parseInt(patient.ageAtDiagnosis) || 0,
           sex: patient.sex || '',
           smokingStatus: patient.smokingStatus || '',
+          smokingDetails: typeof patient.smokingDetails === 'string' ? patient.smokingDetails : '',
           primaryDiagnosis: patient.primaryDiagnosis || '',
           diseaseDuration: patient.diseaseDuration || '',
           montrealClass: patient.montrealClass || '',

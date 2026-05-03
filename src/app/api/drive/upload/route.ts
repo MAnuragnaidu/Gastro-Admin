@@ -23,7 +23,8 @@ export async function POST(req: Request) {
 
     const { GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN, GDRIVE_FOLDER_ID } = process.env;
 
-    if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET || !GDRIVE_REFRESH_TOKEN || !GDRIVE_FOLDER_ID) {
+    const credsOk = !!(GDRIVE_CLIENT_ID && GDRIVE_CLIENT_SECRET && GDRIVE_REFRESH_TOKEN && GDRIVE_FOLDER_ID);
+    if (!credsOk) {
       return NextResponse.json({ error: 'Google Drive credentials not configured' }, { status: 500 });
     }
 

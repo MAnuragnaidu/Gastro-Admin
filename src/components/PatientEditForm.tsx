@@ -318,10 +318,7 @@ export default function PatientEditForm({ patient }: { patient: any }) {
             </div>
             <div className="pr-field-grid">
               {renderField('Full Name', 'name')}
-              <div className="pr-field">
-                <label className="pr-field-label">Email <span style={{ color: '#64748b', textTransform: 'none' }}>(Read-only from User Auth)</span></label>
-                <input type="text" value={patient.user?.email || 'N/A'} readOnly className="pr-input read-only" />
-              </div>
+              {renderField('Email', 'email', 'email')}
               {renderField('Medical Record No.', 'mrn')}
               {renderField('Contact Phone', 'contactPhone', 'tel')}
               {renderField('Place of Living', 'placeOfLiving')}

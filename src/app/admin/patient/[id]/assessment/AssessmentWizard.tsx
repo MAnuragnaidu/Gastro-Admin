@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { normalizeSmokingStatusForForm } from '@/lib/smoking';
 import {
   AdminStep1, AdminStep2, AdminStep3, AdminStep4, AdminStep5,
   AdminStep6, AdminStep7, AdminStep8, AdminStep9
@@ -40,6 +41,8 @@ export default function AssessmentWizard({ patient }: { patient: any }) {
     try { if (typeof parsed.previousTreatmentsTried === 'string') parsed.previousTreatmentsTried = JSON.parse(parsed.previousTreatmentsTried); } catch (e) { }
     try { if (typeof parsed.comorbidities === 'string') parsed.comorbidities = JSON.parse(parsed.comorbidities); } catch (e) { }
     try { if (typeof parsed.documents === 'string') parsed.documents = JSON.parse(parsed.documents); } catch (e) { }
+    parsed.smokingStatus = normalizeSmokingStatusForForm(parsed.smokingStatus);
+    if (parsed.smokingDetails == null) parsed.smokingDetails = '';
     return parsed;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);

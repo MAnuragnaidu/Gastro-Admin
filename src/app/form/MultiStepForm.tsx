@@ -70,7 +70,14 @@ export default function MultiStepForm() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to submit form');
+        let apiErr = '';
+        try {
+          const j = await res.json();
+          apiErr = typeof j?.error === 'string' ? j.error : '';
+        } catch {
+          /* ignore */
+        }
+        throw new Error(apiErr || 'Failed to submit form');
       }
 
       localStorage.removeItem('mygastro_form_draft');

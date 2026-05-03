@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { patientCreateDataFromBody } from '@/lib/patient-create-data';
 
 export async function PUT(
   request: Request,
@@ -22,23 +23,8 @@ export async function PUT(
 
     const data = await request.json();
 
-    // Prepare arrays as JSON strings
-    const payload = {
-      ...data,
-      previousSurgeries: Array.isArray(data.previousSurgeries) ? JSON.stringify(data.previousSurgeries) : data.previousSurgeries,
-      previousTreatmentsTried: Array.isArray(data.previousTreatmentsTried) ? JSON.stringify(data.previousTreatmentsTried) : data.previousTreatmentsTried,
-      comorbidities: Array.isArray(data.comorbidities) ? JSON.stringify(data.comorbidities) : data.comorbidities,
-      documents: Array.isArray(data.documents) ? JSON.stringify(data.documents) : data.documents,
-      currentAge: Number(data.currentAge) || null,
-      ageAtDiagnosis: Number(data.ageAtDiagnosis) || null,
-    };
-
-    // Remove relations if they slipped in
-    delete payload.id;
-    delete payload.userId;
-    delete payload.user;
-    delete payload.createdAt;
-    delete payload.updatedAt;
+    // Same normalization as POST /api/patients — vaccine fields are objects in the admin UI but Prisma stores JSON strings.
+    const payload = patientCreateDataFromBody(data as Record<string, unknown>);
 
     const updatedPatient = await prisma.patient.update({
       where: { id: patientId },

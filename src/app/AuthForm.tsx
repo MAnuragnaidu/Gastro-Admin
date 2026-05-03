@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,7 +10,6 @@ export default function AuthForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +26,19 @@ export default function AuthForm() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data: { error?: string; user?: { role?: string } };
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Invalid response from server');
+      }
 
       if (!res.ok) {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      window.location.href = data.user.role === 'ADMIN' ? '/admin' : '/form';
+      const role = data.user?.role;
+      window.location.href = role === 'ADMIN' ? '/admin' : '/form';
     } catch (err: any) {
       setError(err.message);
     } finally {

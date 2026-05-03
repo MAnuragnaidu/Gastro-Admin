@@ -1,19 +1,22 @@
 -- CreateTable
 CREATE TABLE "User" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'PATIENT',
     "password" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Patient" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "userId" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER,
     "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL DEFAULT '',
     "mrn" TEXT NOT NULL,
     "contactPhone" TEXT NOT NULL,
     "placeOfLiving" TEXT NOT NULL,
@@ -23,6 +26,7 @@ CREATE TABLE "Patient" (
     "ageAtDiagnosis" INTEGER NOT NULL,
     "sex" TEXT NOT NULL,
     "smokingStatus" TEXT NOT NULL,
+    "smokingDetails" TEXT NOT NULL DEFAULT '',
     "primaryDiagnosis" TEXT NOT NULL,
     "diseaseDuration" TEXT NOT NULL,
     "montrealClass" TEXT NOT NULL,
@@ -67,10 +71,15 @@ CREATE TABLE "Patient" (
     "preferredLanguage" TEXT NOT NULL,
     "occupation" TEXT NOT NULL,
     "specialConsiderations" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Patient_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "documents" TEXT DEFAULT '[]',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Patient_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- AddForeignKey
+ALTER TABLE "Patient" ADD CONSTRAINT "Patient_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -1,8 +1,16 @@
 import { prisma } from '@/lib/prisma';
+import { formatSmokingSummary } from '@/lib/smoking';
 import PatientActions from '../../../../components/PatientActions';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+
+/** User-linked account email, else intake email on Patient (structural typing — Prisma include payload can lag `email` in TS). */
+function patientContactEmail(p: { user: { email: string } | null; email?: string | null }): string {
+  const fromUser = p.user?.email?.trim();
+  const fromRecord = typeof p.email === 'string' ? p.email.trim() : '';
+  return fromUser || fromRecord || 'N/A';
+}
 
 export default async function PatientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
@@ -305,7 +313,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               { label: 'Duration', value: patient.diseaseDuration || '—' },
               { label: 'Age', value: patient.currentAge ? `${patient.currentAge} yrs` : '—' },
               { label: 'Age at Dx', value: patient.ageAtDiagnosis ? `${patient.ageAtDiagnosis} yrs` : '—' },
-              { label: 'Smoking', value: patient.smokingStatus || '—' },
+              { label: 'Smoking', value: formatSmokingSummary(patient.smokingStatus, patient.smokingDetails) || '—' },
               { label: 'Submitted', value: createdDate },
             ].map((s, i) => (
               <div className="pr-chip" key={i}>
@@ -332,13 +340,17 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               <div className="pr-field-grid">
                 {[
                   { label: 'Full Name', value: patient.name },
-                  { label: 'Email', value: patient.user?.email || 'N/A' },
+                  { label: 'Email', value: patientContactEmail(patient) },
                   { label: 'Medical Record No.', value: patient.mrn },
                   { label: 'Contact Phone', value: patient.contactPhone },
                   { label: 'Place of Living', value: patient.placeOfLiving },
                   { label: 'Referred By', value: patient.referredBy },
                   { label: 'Date of Birth', value: patient.dateOfBirth },
                   { label: 'Preferred Language', value: patient.preferredLanguage },
+                  {
+                    label: 'Smoking',
+                    value: formatSmokingSummary(patient.smokingStatus, patient.smokingDetails),
+                  },
                 ].map((f, i) => (
                   <div className="pr-field" key={i}>
                     <div className="pr-field-label">{f.label}</div>
@@ -590,7 +602,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
                 { label: 'Age', value: patient.currentAge ? `${patient.currentAge} years` : '—' },
                 { label: 'Age at Dx', value: patient.ageAtDiagnosis ? `${patient.ageAtDiagnosis} years` : '—' },
                 { label: 'Sex', value: patient.sex },
-                { label: 'Smoking', value: patient.smokingStatus },
+                { label: 'Smoking', value: formatSmokingSummary(patient.smokingStatus, patient.smokingDetails) },
                 { label: 'Location', value: patient.placeOfLiving },
                 { label: 'Language', value: patient.preferredLanguage },
                 { label: 'Occupation', value: patient.occupation },

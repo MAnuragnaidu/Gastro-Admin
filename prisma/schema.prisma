@@ -26,6 +26,7 @@ userId    Int?
 user      User?    @relation(fields: [userId], references: [id])
 
 name             String
+email            String @default("")
 mrn              String
 contactPhone     String
 placeOfLiving    String
@@ -35,6 +36,7 @@ currentAge       Int
 ageAtDiagnosis   Int
 sex              String
 smokingStatus    String
+smokingDetails   String
 
 primaryDiagnosis  String
 diseaseDuration   String

@@ -65,7 +65,14 @@ export function Step1({ data, updateData }: StepProps) {
         {textInput('ageAtDiagnosis', 'Age at Diagnosis', 'number', data, updateData)}
       </div>
       {radioGroup('sex', 'Sex', ['Male', 'Female', 'Other'], data, updateData)}
-      {radioGroup('smokingStatus', 'Smoking Status', ['Current', 'Former', 'Never'], data, updateData)}
+      {radioGroup('smokingStatus', 'Smoking Status', ['Current smoker', 'Ex smoker', 'Never smoked'], data, updateData)}
+      {(data.smokingStatus === 'Current smoker' || data.smokingStatus === 'Ex smoker' || data.smokingStatus === 'Current' || data.smokingStatus === 'Former') &&
+        textArea(
+          'smokingDetails',
+          'Smoking amount (e.g. packs per day, cigarettes/day, pack-years)',
+          data,
+          updateData,
+        )}
     </div>
   );
 }
