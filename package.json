@@ -6,7 +6,10 @@
     "dev": "next dev --webpack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:openrouter": "node scripts/test-openrouter.mjs",
+    "seed:care-sheet-prompt": "node scripts/seed-care-sheet-prompt.mjs",
+    "test:generate-care-sheet": "node scripts/test-generate-care-sheet.mjs"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

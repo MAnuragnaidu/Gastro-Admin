@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
         'X-Title': 'MyGastro AI',
       },
       body: JSON.stringify({
-        model: 'qwen/qwen3-8b:free',
+        model: process.env.OPENROUTER_MODEL?.trim() || 'liquid/lfm-2.5-1.2b-instruct:free',
+        max_tokens: 2048,
         messages: [
           {
             role: 'user',

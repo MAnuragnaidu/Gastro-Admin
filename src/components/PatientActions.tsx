@@ -47,99 +47,27 @@ export default function PatientActions({ patient }: { patient: any }) {
     } catch { return str || 'None'; }
   };
 
-  const docContent = `Generate complete KP-3P protocol for:
-
-═══════════════════════════════════════
-PATIENT INFORMATION
-═══════════════════════════════════════
-PATIENT: ${patient.name || ''}
-PATIENT ID: ${patient.id || ''}
-EMAIL: ${patientEmailForExport(patient)}
-DATE OF BIRTH: ${patient.dateOfBirth || ''}
-CURRENT AGE: ${patient.currentAge || ''} years
-AGE AT DIAGNOSIS: ${patient.ageAtDiagnosis || ''} years
-SEX: ${patient.sex || ''}
-SMOKING STATUS: ${patient.smokingStatus || ''}
-Smoking Details: ${patient.smokingDetails || ''}
-CONTACT: ${patient.contactPhone || ''}
-PLACE OF LIVING: ${patient.placeOfLiving || ''}
-REFERRED BY: ${patient.referredBy || ''}
-
-═══════════════════════════════════════
-DISEASE CHARACTERISTICS
-═══════════════════════════════════════
-PRIMARY DIAGNOSIS: ${patient.primaryDiagnosis || ''}
-MONTREAL CLASSIFICATION: ${patient.montrealClass || ''}
-DISEASE DURATION: ${patient.diseaseDuration || ''}
-PREVIOUS SURGERIES: ${parseArray(patient.previousSurgeries)}
-
-═══════════════════════════════════════
-CURRENT DISEASE ACTIVITY
-═══════════════════════════════════════
-ACTIVITY LEVEL: ${patient.currentDiseaseActivity || ''}
-- Bowel frequency: ${patient.stoolFrequency || ''}
-- Blood in stool: ${patient.bloodInStool || ''}
-- Abdominal pain: ${patient.abdominalPain || ''}
-- Quality of life impact: ${patient.impactOnQoL || ''}
-- Weight loss: ${patient.weightLoss || ''}
-
-═══════════════════════════════════════
-LABORATORY & INVESTIGATIONS
-═══════════════════════════════════════
-LABS (Date: ${patient.dateMostRecentLabs || ''}): ${patient.recentLabValues || ''}
-ENDOSCOPY (Date: ${patient.dateMostRecentColono || ''}): ${patient.colonoscopyFindings || ''}
-RECENT IMAGING: ${patient.recentImaging || 'None'}
-DEXA SCAN: ${patient.mostRecentDexa || 'None'}
-
-═══════════════════════════════════════
-CURRENT TREATMENT
-═══════════════════════════════════════
-CURRENT MEDICATIONS: ${patient.currentIbdMedications || 'None'}
-RESPONSE TO CURRENT TREATMENT: ${patient.responseToTreatment || ''}
-THERAPEUTIC DRUG MONITORING: ${patient.tdmResults || ''}
-STEROID USE: ${patient.steroidUse || ''}
-SUPPLEMENTS: ${patient.currentSupplements || ''}
-
-═══════════════════════════════════════
-TREATMENT HISTORY
-═══════════════════════════════════════
-PREVIOUS TREATMENTS TRIED: ${parseArray(patient.previousTreatmentsTried)}
-DETAILS OF FAILED TREATMENTS: ${patient.failedTreatments || ''}
-
-═══════════════════════════════════════
-INFECTION SCREENING STATUS
-═══════════════════════════════════════
-TB SCREENING: ${patient.tbScreening || ''}
-HBsAg: ${patient.hepBSurfaceAg || ''} | Anti-HBs: ${patient.hepBSurfaceAb || ''} | Anti-HBc: ${patient.hepBCoreAb || ''}
-HEPATITIS C (Anti-HCV): ${patient.antiHcv || ''}
-HIV (Anti-HIV): ${patient.antiHiv || ''}
-
-═══════════════════════════════════════
-VACCINATION HISTORY
-═══════════════════════════════════════
-Influenza: ${formatVaccineForDocExport(patient.influenza)}
-COVID-19: ${formatVaccineForDocExport(patient.covid19)}
-Pneumococcal: ${formatVaccineForDocExport(patient.pneumococcal)}
-Hepatitis B: ${formatVaccineForDocExport(patient.hepatitisB)}
-Hepatitis A: ${formatVaccineForDocExport(patient.hepatitisA)}
-Hepatitis E: ${formatVaccineForDocExport(patient.hepatitisE)}
-Zoster (Shingrix): ${formatVaccineForDocExport(patient.zoster)}
-MMR/Varicella: ${formatVaccineForDocExport(patient.mmrVaricella)}
-Tetanus/Tdap: ${formatVaccineForDocExport(patient.tetanusTdap)}
-
-═══════════════════════════════════════
-OTHER MEDICAL INFORMATION
-═══════════════════════════════════════
-COMORBIDITIES: ${parseArray(patient.comorbidities)}
-EXTRAINTESTINAL MANIFESTATIONS: ${patient.extraintestinalManif || 'None'}
-PREGNANCY/FAMILY PLANNING: ${patient.pregnancyPlanning || ''}
-OCCUPATION: ${patient.occupation || ''}
-SPECIAL CONSIDERATIONS: ${patient.specialConsiderations || ''}
-
-Use 3-page CONCISE patient care plan format.
-IMPORTANT LANGUAGE INSTRUCTION:
-- Generate the CLINICAL PROTOCOL (Part 1) in ENGLISH (for the physician)
-- Generate the PATIENT CARE PLAN (Part 2) in: ${carePlanPrimaryPatientLanguage(patient.preferredLanguage)}`;
+  const docContent = `Generate KP-3P protocol.
+[PATIENT]
+Name:${patient.name||''} ID:${patient.id||''} DOB:${patient.dateOfBirth||''} Age:${patient.currentAge||''}y Sex:${patient.sex||''}
+Email:${patientEmailForExport(patient)} Phone:${patient.contactPhone||''} Location:${patient.placeOfLiving||''} Occupation:${patient.occupation||''} ReferredBy:${patient.referredBy||''}
+SmokingStatus:${patient.smokingStatus||''} SmokingDetails:${patient.smokingDetails||''}
+[DISEASE]
+Diagnosis:${patient.primaryDiagnosis||''} Montreal:${patient.montrealClass||''} Duration:${patient.diseaseDuration||''} AgeAtDx:${patient.ageAtDiagnosis||''}y PriorSurgeries:${parseArray(patient.previousSurgeries)}
+[ACTIVITY]
+Level:${patient.currentDiseaseActivity||''} BowelFreq:${patient.stoolFrequency||''} BloodInStool:${patient.bloodInStool||''} AbdPain:${patient.abdominalPain||''} QoL:${patient.impactOnQoL||''} WeightLoss:${patient.weightLoss||''}
+[LABS]
+Labs(${patient.dateMostRecentLabs||''}):${patient.recentLabValues||''} Endoscopy(${patient.dateMostRecentColono||''}):${patient.colonoscopyFindings||''} Imaging:${patient.recentImaging||'None'} DEXA:${patient.mostRecentDexa||'None'}
+[TREATMENT]
+CurrentMeds:${patient.currentIbdMedications||'None'} Response:${patient.responseToTreatment||''} TDM:${patient.tdmResults||''} Steroids:${patient.steroidUse||''} Supplements:${patient.currentSupplements||''}
+PriorTx:${parseArray(patient.previousTreatmentsTried)} FailedTx:${patient.failedTreatments||''}
+[SCREENING]
+TB:${patient.tbScreening||''} HBsAg:${patient.hepBSurfaceAg||''} AntiHBs:${patient.hepBSurfaceAb||''} AntiHBc:${patient.hepBCoreAb||''} AntiHCV:${patient.antiHcv||''} AntiHIV:${patient.antiHiv||''}
+[VACCINES]
+Influenza:${formatVaccineForDocExport(patient.influenza)} COVID19:${formatVaccineForDocExport(patient.covid19)} Pneumococcal:${formatVaccineForDocExport(patient.pneumococcal)} HepB:${formatVaccineForDocExport(patient.hepatitisB)} HepA:${formatVaccineForDocExport(patient.hepatitisA)} HepE:${formatVaccineForDocExport(patient.hepatitisE)} Zoster:${formatVaccineForDocExport(patient.zoster)} MMR/Varicella:${formatVaccineForDocExport(patient.mmrVaricella)} Tdap:${formatVaccineForDocExport(patient.tetanusTdap)}
+[OTHER]
+Comorbidities:${parseArray(patient.comorbidities)} EIM:${patient.extraintestinalManif||'None'} Pregnancy:${patient.pregnancyPlanning||''} SpecialNotes:${patient.specialConsiderations||''}
+Format: 3-page concise care plan. Part1(Clinical Protocol):English. Part2(Patient Care Plan):${carePlanPrimaryPatientLanguage(patient.preferredLanguage)}`;
 
   const generatePdf = () => {
     const doc = new jsPDF();
