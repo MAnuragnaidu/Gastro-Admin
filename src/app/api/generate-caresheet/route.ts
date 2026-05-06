@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 8192
+          maxOutputTokens: 16000
         }
       }),
     });
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     const aiData = await aiResponse.json();
     const modelOutput: string = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-    
+
     if (!modelOutput || modelOutput.length < 100)
       return NextResponse.json({ error: 'Empty model response' }, { status: 500 });
 
