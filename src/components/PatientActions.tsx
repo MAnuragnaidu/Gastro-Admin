@@ -119,6 +119,8 @@ Format: 3-page concise care plan. Part1(Clinical Protocol):English. Part2(Patien
       const formData = new FormData();
       formData.append('file', file);
       formData.append('isExport', 'true');
+      formData.append('patientName', String(patient.name || ''));
+      formData.append('mrn', String(patient.mrn || ''));
       const res = await fetch('/api/drive/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to upload to Google Drive');

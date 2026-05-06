@@ -115,6 +115,8 @@ export function Step3({ data, updateData }: StepProps) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('patientName', String((data as any).name || ''));
+      formData.append('mrn', String((data as any).mrn || ''));
       
       const res = await fetch('/api/drive/upload', {
         method: 'POST',

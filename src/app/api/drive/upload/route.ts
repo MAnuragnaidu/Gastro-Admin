@@ -16,9 +16,26 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
+    const getText = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = formData.get(key);
+        if (typeof value === 'string' && value.trim()) return value.trim();
+      }
+      return '';
+    };
+
+    const patientName = getText('patientName', 'name');
+    const mrn = getText('mrn', 'mrnNumber', 'patientMrn');
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    if (!patientName || !mrn) {
+      return NextResponse.json(
+        { error: 'Missing patientName or mrn in upload request' },
+        { status: 400 }
+      );
     }
 
     const { GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN, GDRIVE_FOLDER_ID } = process.env;
@@ -40,6 +57,38 @@ export async function POST(req: Request) {
 
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+    const sanitizedPatientName = patientName.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+    const sanitizedMrn = mrn.replace(/[\\/:*?"<>|]/g, '');
+    const folderName = `${sanitizedPatientName}_${sanitizedMrn}`;
+
+    const escapedFolderName = folderName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const folderLookup = await drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and name='${escapedFolderName}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`,
+      fields: 'files(id,name)',
+      pageSize: 1,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+
+    let patientFolderId = folderLookup.data.files?.[0]?.id;
+
+    if (!patientFolderId) {
+      const createdFolder = await drive.files.create({
+        requestBody: {
+          name: folderName,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [GDRIVE_FOLDER_ID],
+        },
+        fields: 'id',
+        supportsAllDrives: true,
+      });
+      patientFolderId = createdFolder.data.id || undefined;
+    }
+
+    if (!patientFolderId) {
+      throw new Error('Failed to resolve patient folder in Google Drive');
+    }
+
     // Convert File to readable stream
     const buffer = Buffer.from(await file.arrayBuffer());
     const stream = Readable.from(buffer);
@@ -48,13 +97,14 @@ export async function POST(req: Request) {
     const response = await drive.files.create({
       requestBody: {
         name: file.name,
-        parents: [GDRIVE_FOLDER_ID],
+        parents: [patientFolderId],
       },
       media: {
         mimeType: file.type || 'application/octet-stream',
         body: stream,
       },
       fields: 'id, webViewLink, webContentLink',
+      supportsAllDrives: true,
     });
 
     const fileId = response.data.id;
@@ -77,6 +127,8 @@ export async function POST(req: Request) {
       success: true,
       url: `https://drive.google.com/file/d/${fileId}/view`,
       fileId,
+      folderId: patientFolderId,
+      folderName,
       webViewLink: response.data.webViewLink,
       webContentLink: response.data.webContentLink,
     }, { headers });

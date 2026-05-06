@@ -366,6 +366,8 @@ export const AdminStep3 = ({ data, updateData }: any) => {
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('patientName', String(data.name || ''));
+        formData.append('mrn', String(data.mrn || ''));
 
         const res = await fetch('/api/drive/upload', {
           method: 'POST',
