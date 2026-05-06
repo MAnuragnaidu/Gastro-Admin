@@ -6,19 +6,111 @@ import { useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import { formatVaccineForDocExport } from '@/lib/formatVaccineExport';
 import { carePlanPrimaryPatientLanguage } from '@/lib/preferredLanguagePrompt';
+import type { PatientData } from '@/lib/kp3p-prompt';
+import { CaresheetButton } from '@/components/CaresheetButton';
+
+function vaccineStatusShort(raw: unknown): string {
+  const s = formatVaccineForDocExport(raw);
+  if (!s || s === '—') return 'Unknown';
+  const first = s.split('\n')[0].replace(/^Status:\s*/i, '').trim();
+  return first || 'Unknown';
+}
+
+function parseJsonStringArray(raw: unknown): string[] {
+  if (raw == null || raw === '') return [];
+  if (typeof raw !== 'string') return [];
+  const t = raw.trim();
+  if (!t) return [];
+  try {
+    const p = JSON.parse(t);
+    if (Array.isArray(p)) return p.map((x) => String(x).trim()).filter(Boolean);
+  } catch {
+    return [t];
+  }
+  return [];
+}
+
+function extractMayoScore(findings: string): string {
+  if (!findings) return '';
+  const m = findings.match(/mayo\s*(?:score|endoscopic)?[:\s]*(\d+)/i);
+  return m?.[1] ?? '';
+}
+
+function roughLabs(raw: string): Pick<PatientData, 'hb' | 'tlc' | 'platelets' | 'crp' | 'albumin'> {
+  const empty = { hb: '', tlc: '', platelets: '', crp: '', albumin: '' };
+  if (!raw?.trim()) return empty;
+  const pick = (re: RegExp) => raw.match(re)?.[1]?.trim() ?? '';
+  return {
+    hb: pick(/\bhb\b[:\s]+([^\s|,/;]+)/i) || pick(/hemoglobin[:\s]+([^\s|,/;]+)/i),
+    tlc: pick(/\btlc\b[:\s]+([^\s|,/;]+)/i) || pick(/\bwbc\b[:\s]+([^\s|,/;]+)/i),
+    platelets: pick(/\bplatelet[s]?\b[:\s]+([^\s|,/;]+)/i),
+    crp: pick(/\bcrp\b[:\s]+([^\s|,/;]+)/i),
+    albumin: pick(/\balbumin\b[:\s]+([^\s|,/;]+)/i),
+  };
+}
+
+function toKP3PPatient(patient: any): PatientData {
+  const labs = roughLabs(patient.recentLabValues || '');
+  const comorbidities = parseJsonStringArray(patient.comorbidities);
+  const specialNotes = patient.specialConsiderations?.trim()
+    ? [String(patient.specialConsiderations).trim()]
+    : undefined;
+  const surg = parseJsonStringArray(patient.previousSurgeries);
+  return {
+    name: patient.name || '',
+    id: String(patient.id ?? ''),
+    age: Number(patient.currentAge) || 0,
+    sex: patient.sex || '',
+    occupation: patient.occupation || '',
+    location: patient.placeOfLiving || '',
+    smoking: [patient.smokingStatus, patient.smokingDetails].filter(Boolean).join('; ') || '',
+    diagnosis: patient.primaryDiagnosis || '',
+    montreal: patient.montrealClass || '',
+    severity: patient.currentDiseaseActivity || '',
+    duration: patient.diseaseDuration || '',
+    ageAtDx: Number(patient.ageAtDiagnosis) || 0,
+    priorSurgeries: surg.length ? surg.join(', ') : undefined,
+    bowelFreq: patient.stoolFrequency || '',
+    bloodInStool: patient.bloodInStool || '',
+    abdPain: patient.abdominalPain || '',
+    weightLoss: patient.weightLoss || '',
+    ...labs,
+    mayoScore: extractMayoScore(patient.colonoscopyFindings || ''),
+    endoscopyFindings: patient.colonoscopyFindings || '',
+    imagingFindings: patient.recentImaging || '',
+    dexa: patient.mostRecentDexa || '',
+    currentMeds: patient.currentIbdMedications || '',
+    treatmentResponse: patient.responseToTreatment || '',
+    tdm: patient.tdmResults || '',
+    priorFailed: patient.failedTreatments || '',
+    tbStatus: patient.tbScreening || '',
+    hbsAg: patient.hepBSurfaceAg || '',
+    antiHBs: patient.hepBSurfaceAb || '',
+    antiHBc: patient.hepBCoreAb || '',
+    antiHCV: patient.antiHcv || '',
+    antiHIV: patient.antiHiv || '',
+    comorbidities: comorbidities.length ? comorbidities : undefined,
+    eim: patient.extraintestinalManif || undefined,
+    specialNotes,
+    patientLanguage: carePlanPrimaryPatientLanguage(patient.preferredLanguage),
+    vaccines: {
+      influenza: vaccineStatusShort(patient.influenza),
+      covid19: vaccineStatusShort(patient.covid19),
+      pneumococcal: vaccineStatusShort(patient.pneumococcal),
+      hepatitisA: vaccineStatusShort(patient.hepatitisA),
+      hepatitisB: vaccineStatusShort(patient.hepatitisB),
+      zoster: vaccineStatusShort(patient.zoster),
+      mmr: vaccineStatusShort(patient.mmrVaricella),
+      tdap: vaccineStatusShort(patient.tetanusTdap),
+    },
+  };
+}
 
 export default function PatientActions({ patient }: { patient: any }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // ── AI CARE SHEET STATES ──
-  const [showCareSheet, setShowCareSheet] = useState(false);
-  const [careSheetContent, setCareSheetContent] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
-  const [generateError, setGenerateError] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -133,71 +225,11 @@ Format: 3-page concise care plan. Part1(Clinical Protocol):English. Part2(Patien
     }
   };
 
-  // ── GENERATE CARE SHEET ──
-  const handleGenerateCareSheet = async () => {
-    setShowCareSheet(true);
-    setIsGenerating(true);
-    setGenerateError('');
-    setCareSheetContent('');
-    setIsApproved(false);
-    try {
-      const res = await fetch('/api/generate-care-sheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patientData: patient }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to generate');
-      setCareSheetContent(data.careSheet);
-    } catch (err: any) {
-      setGenerateError(err.message);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // ── DOWNLOAD CARE SHEET AS PDF ──
-  const handleDownloadPDF = async () => {
-    const { default: jsPDFLib } = await import('jspdf');
-    const { default: html2canvas } = await import('html2canvas');
-    const element = document.getElementById('care-sheet-preview');
-    if (!element) return;
-    const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDFLib({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth - 20;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let y = 10;
-    let remainingHeight = imgHeight;
-    while (remainingHeight > 0) {
-      pdf.addImage(imgData, 'PNG', 10, y, imgWidth, imgHeight);
-      remainingHeight -= (pageHeight - 20);
-      if (remainingHeight > 0) { pdf.addPage(); y = 10 - (imgHeight - remainingHeight); }
-    }
-    pdf.save(`care-sheet-${patient.name ?? 'patient'}.pdf`);
-  };
-
   return (
     <>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
 
-        {/* ── AI CARE SHEET BUTTON ── */}
-        <button
-          onClick={handleGenerateCareSheet}
-          style={{
-            fontSize: 12, padding: '6px 14px', borderRadius: 7,
-            border: 'none',
-            background: 'linear-gradient(135deg, #7c3aed, #0891b2)',
-            color: '#fff', cursor: 'pointer', fontWeight: 700,
-            fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
-            display: 'flex', alignItems: 'center', gap: 5,
-            boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
-          }}
-        >
-          ✨ AI Care Sheet
-        </button>
+        <CaresheetButton patient={toKP3PPatient(patient)} label="📋 Download KP-3P Care Sheet" />
 
         {/* ── EXPORT DROPDOWN ── */}
         <div style={{ position: 'relative' }} ref={dropdownRef}>
@@ -241,90 +273,6 @@ Format: 3-page concise care plan. Part1(Clinical Protocol):English. Part2(Patien
         </button>
       </div>
 
-      {/* ── AI CARE SHEET MODAL ── */}
-      {showCareSheet && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, width: '100%', maxWidth: 860, maxHeight: '90vh', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif", overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}>
-
-            {/* Modal Header */}
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #0891b2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✨</div>
-                <div>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>AI Care Sheet</h2>
-                  <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{patient.name ?? 'Patient'}</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {isApproved && (
-                  <button onClick={handleDownloadPDF} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: '#059669', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    ⬇ Download PDF
-                  </button>
-                )}
-                {!isApproved && !isGenerating && careSheetContent && (
-                  <button onClick={() => setIsApproved(true)} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: '#2563eb', border: 'none', color: '#ffffff', cursor: 'pointer' }}>
-                    ✅ Approve
-                  </button>
-                )}
-                <button onClick={() => setShowCareSheet(false)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', cursor: 'pointer' }}>
-                  ✕ Close
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-
-              {/* Loading */}
-              {isGenerating && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid #e2e8f0', borderTopColor: '#7c3aed', animation: 'spin 1s linear infinite' }} />
-                  <p style={{ fontSize: 14, color: '#64748b' }}>Generating care sheet with AI...</p>
-                  <p style={{ fontSize: 12, color: '#94a3b8' }}>This may take 15-30 seconds</p>
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                </div>
-              )}
-
-              {/* Error */}
-              {generateError && (
-                <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 10, padding: 16, color: '#e11d48', fontSize: 13 }}>
-                  ⚠️ {generateError}
-                </div>
-              )}
-
-              {/* Care Sheet Content */}
-              {!isGenerating && careSheetContent && (
-                <>
-                  {isApproved ? (
-                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#166534', fontWeight: 600 }}>
-                      ✅ Approved — Ready to download as PDF
-                    </div>
-                  ) : (
-                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 16px', marginBottom: 16, fontSize: 13, color: '#92400e' }}>
-                      ✏️ You can edit the care sheet below before approving
-                    </div>
-                  )}
-                  <div
-                    id="care-sheet-preview"
-                    contentEditable={!isApproved}
-                    suppressContentEditableWarning
-                    style={{
-                      minHeight: 400, padding: 24, borderRadius: 10,
-                      border: isApproved ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                      background: isApproved ? '#f0fdf4' : '#ffffff',
-                      fontSize: 14, lineHeight: 1.8, color: '#0f172a',
-                      outline: 'none', whiteSpace: 'pre-wrap',
-                      fontFamily: "'Inter', sans-serif",
-                    }}
-                  >
-                    {careSheetContent}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
