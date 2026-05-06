@@ -12,141 +12,177 @@ export interface PatientData {
   patientLanguage?: string;
   vaccines?: { influenza?:string; covid19?:string; pneumococcal?:string;
     hepatitisA?:string; hepatitisB?:string; zoster?:string; mmr?:string; tdap?:string; };
+  contactPhone?: string;
+  dateOfBirth?: string;
 }
 
 export function buildKP3PPrompt(patient: PatientData): string {
-  const lang = patient.patientLanguage || 'Telugu';
-  const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  return `You are a medical documentation assistant. Fill the template below using patient data.
-RULES: Output ONLY the filled template. Keep all ##SECTION:NAME## markers exactly. Fill every [PLACEHOLDER] and every ROW. Write ${lang} section in ${lang} script. No extra text.
+  const today = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const dobStr = patient.dateOfBirth || '';
+
+  return `You are a world-class IBD specialist. Generate a customized patient clinical protocol using EXACTLY the HTML template provided below. 
+
+RULES:
+1. Output ONLY pure HTML without Markdown fences (\`\`\`).
+2. Use standard tags: <h2>, <h3>, <h4>, <h5>, <table>, <tr>, <th>, <td>, <ul>, <li>, <b>, <p>, <br>.
+3. Do not add any custom CSS classes or inline styles.
+4. Replace all bracketed [PLACEHOLDERS] with highly specific, clinical data derived from the patient's record.
+5. Provide actionable insights, especially around biologic failure, TB, Hepatitis, and vaccines.
+6. Only output English.
 
 ---BEGIN TEMPLATE---
+<h2>KP-3P IBD MANAGEMENT SYSTEM</h2>
+<h3>CLINICAL PROTOCOL — PHYSICIAN RECORD</h3>
+<p>Know Your Patient • Predict Risk • Prevent Infections • Protect Long-term Health</p>
 
-##SECTION:HEADER##
-PATIENT: ${patient.name} | ID: ${patient.id} | DATE: ${today} | PROTOCOL: KP-3P v1.0
-DIAGNOSIS: ${patient.diagnosis} | MONTREAL: ${patient.montreal} | SEVERITY: ${patient.severity}
-DOCTOR: Dr. Kiran Peddi | Yashoda Hospital, Somajiguda
+<h3>PATIENT IDENTIFICATION</h3>
+<table>
+  <tr><th>Field</th><th>Details</th></tr>
+  <tr><td>Patient Name</td><td>${patient.name || 'Unknown'}</td></tr>
+  <tr><td>Patient ID</td><td>${patient.id || 'N/A'}</td></tr>
+  <tr><td>Date of Birth</td><td>${dobStr} | Age: ${patient.age} years</td></tr>
+  <tr><td>Sex</td><td>${patient.sex}</td></tr>
+  <tr><td>Occupation</td><td>${patient.occupation}</td></tr>
+  <tr><td>Contact</td><td>${patient.contactPhone || 'N/A'} | ${patient.location}</td></tr>
+  <tr><td>Protocol Date</td><td>${today} | KP-3P v1.0</td></tr>
+</table>
 
-##SECTION:RISK##
-RISK_LEVEL: [LOW or MODERATE or HIGH]
-TRAJECTORY: [one sentence predicted disease course]
-APPROACH: [Step-up or Top-down or Accelerated]
-EVIDENCE: [guideline name and year]
-IMPLICATION: [one sentence clinical implication]
+<h3>⚠️ CRITICAL PHYSICIAN ALERTS</h3>
+<p><b>⚠️ ALERT 1: [TITLE OF MOST URGENT RISK/FAILURE]</b><br>[Detailed explanation of risk and immediate clinical action required]</p>
+<p><b>⚠️ ALERT 2: [DATA INCONSISTENCY OR INFECTION RISK]</b><br>[Explanation of missing data or urgent infection risk (e.g. pending Hep B serology or TB)]</p>
 
-RISK_FACTORS:
-- [risk factor 1 from patient data]
-- [risk factor 2]
-- [risk factor 3]
-- [risk factor 4]
-- [risk factor 5]
-- [risk factor 6]
+<h3>ITERATION 1 — INITIAL ASSESSMENT (Know Your Patient)</h3>
+<h4>A. Disease Classification & Severity</h4>
+<table>
+  <tr><th>Parameter</th><th>Finding</th></tr>
+  <tr><td>Diagnosis</td><td>${patient.diagnosis}</td></tr>
+  <tr><td>Montreal Classification</td><td>${patient.montreal} — [Brief clinical interpretation]</td></tr>
+  <tr><td>Disease Duration</td><td>${patient.duration}</td></tr>
+  <tr><td>Endoscopic Severity</td><td>Mayo Score ${patient.mayoScore || 'Unknown'} — [Brief interpretation based on ${patient.endoscopyFindings}]</td></tr>
+  <tr><td>Clinical Activity</td><td>${patient.severity} — [Symptoms: Bowel freq: ${patient.bowelFreq}, Bleeding: ${patient.bloodInStool}]</td></tr>
+  <tr><td>Biochemical Markers</td><td>[List key labs or write 'Required' if missing: CRP ${patient.crp}, Albumin ${patient.albumin}]</td></tr>
+  <tr><td>Overall Severity</td><td>[Clinically X / Endoscopically Y] — [Risk Phenotype]</td></tr>
+</table>
 
-##SECTION:STRIDE##
-ROW|Clinical (Short-term)|[measurable target e.g. HBI <5, stool freq ≤3/day]|Wk 12-16|⏳ Pending
-ROW|Biochemical|[target e.g. CRP <5 mg/L, FC <150 μg/g, Albumin >3.5 g/dL]|Wk 12-24|⏳ Pending
-ROW|Endoscopic|[target: SES-CD <3 for CD, Mayo 0-1 for UC]|Mo 6-12|⏳ Pending
-ROW|Quality of Life|[target e.g. IBDQ >170]|Mo 3,6,12|⏳ Pending
-ROW|Transmural Healing|[target e.g. MRE bowel wall normalization]|Mo 12-24|⏳ Pending
-ESCALATION: [escalation plan if targets not met]
+<h3>ITERATION 2 — SELF-CRITIQUE & GUIDELINE VERIFICATION</h3>
+<h4>Guideline Alignment Check</h4>
+<table>
+  <tr><th>Check</th><th>Status</th></tr>
+  <tr><td>Treatment naivety assumed</td><td>[✅ CORRECTED or ⚠️ FLAGGED] — [Comment on prior therapies]</td></tr>
+  <tr><td>5-ASA-first approach appropriate?</td><td>[Yes/No] — [Reason based on biologic history or severity]</td></tr>
+  <tr><td>STRIDE-II targets specified with timelines?</td><td>✅ Included below with specific measures</td></tr>
+  <tr><td>TB screening before immunosuppression?</td><td>[Status based on ${patient.tbStatus}]</td></tr>
+  <tr><td>Hep B serology complete?</td><td>[Status based on HBsAg/Anti-HBs]</td></tr>
+  <tr><td>Live vaccine status before immunosuppression?</td><td>[Status based on MMR/Varicella]</td></tr>
+  <tr><td>Biologic class selection rationale?</td><td>[✅ Justification for next class]</td></tr>
+</table>
 
-##SECTION:SCREENING##
-ROW|TB Screening (IGRA + CXR)|${patient.tbStatus}|[if NOT TESTED: ORDER URGENTLY; if Negative: Cleared safe to proceed]
-ROW|HBsAg|${patient.hbsAg}|[action]
-ROW|Anti-HBs (Immunity)|${patient.antiHBs}|[if Positive: Immune no vaccine needed; if Negative: vaccinate]
-ROW|Anti-HBc|${patient.antiHBc}|[action]
-ROW|Anti-HCV|${patient.antiHCV}|[action]
-ROW|Anti-HIV|${patient.antiHIV}|[action]
-ALERT_DANGER: [most critical pre-treatment safety warning]
+<h3>ITERATION 3 — FINAL RECOMMENDATIONS</h3>
+<h4>🎯 P1: RISK STRATIFICATION (Final)</h4>
+<table>
+  <tr><th>Parameter</th><th>Finding</th></tr>
+  <tr><td>RISK LEVEL</td><td>[⚠️ HIGH RISK or MODERATE RISK or LOW RISK]</td></tr>
+  <tr><td>Key Risk Factors</td><td>[Bullet points of top 4 risk factors]</td></tr>
+  <tr><td>Disease Trajectory</td><td>[1-2 sentences on expected course if untreated]</td></tr>
+  <tr><td>Treatment Approach</td><td>[Accelerated step-up, Top-down, etc.]</td></tr>
+</table>
 
-##SECTION:VACCINES##
-ROW|Influenza (Inactivated)|${patient.vaccines?.influenza||'Unknown'}|[action]
-ROW|COVID-19|${patient.vaccines?.covid19||'Unknown'}|[action]
-ROW|Pneumococcal|${patient.vaccines?.pneumococcal||'Never'}|[if Never: URGENT PCV20 before biologic]
-ROW|Hepatitis A|${patient.vaccines?.hepatitisA||'Never'}|[action]
-ROW|Hepatitis B|${patient.vaccines?.hepatitisB||'Unknown'}|[check Anti-HBs status]
-ROW|Zoster - Shingrix|${patient.vaccines?.zoster||'Unknown'}|[2 doses recommended before therapy]
-ROW|MMR / Varicella (LIVE)|${patient.vaccines?.mmr||'Unknown'}|[LIVE VACCINE: give ≥4 weeks BEFORE immunosuppression. CONTRAINDICATED after starting biologic.]
-ROW|Tdap / Tetanus|${patient.vaccines?.tdap||'Unknown'}|[action]
-ROW|HPV|${patient.age<=26?'Eligible age '+patient.age:'Not applicable age '+patient.age}|[action]
+<h4>🎯 STRIDE-II THERAPEUTIC TARGETS (Treat-to-Target)</h4>
+<table>
+  <tr><th>Target Domain</th><th>Specific Measure</th><th>Timeline</th><th>Success Criteria</th></tr>
+  <tr><td>Clinical (Short-term)</td><td>[Symptoms]</td><td>[e.g. Weeks 8–12]</td><td>[Criteria]</td></tr>
+  <tr><td>Biochemical (Intermediate)</td><td>[CRP / Calprotectin]</td><td>[e.g. Weeks 12–24]</td><td>[Criteria]</td></tr>
+  <tr><td>Endoscopic (Long-term)</td><td>[Mayo/SES-CD score]</td><td>[e.g. Month 6–12]</td><td>[Criteria]</td></tr>
+  <tr><td>Quality of Life</td><td>[IBDQ/SCCAI]</td><td>[Timeline]</td><td>[Criteria]</td></tr>
+</table>
+<p><b>Assessment Schedule:</b> [Summary timeline]</p>
+<p><b>Escalation Strategy if Targets Not Met:</b><br>
+<ul>
+  <li>[Strategy at Month 3/6]</li>
+  <li>[Strategy at Month 12]</li>
+</ul></p>
 
-##SECTION:TREATMENT##
-MEDICATION: [recommended drug for this patient's diagnosis severity and treatment history]
-DOSE: [exact dose and route]
-SCHEDULE: [exact schedule]
-MECHANISM: [one sentence plain language]
-ONSET: [realistic timeline]
-RATIONALE: [2 sentences specific to this patient]
-EVIDENCE: [trial or guideline]
-ALTERNATIVE: [alternative drug and when to prefer it]
-STEROID_BRIDGE: [Yes with details OR No]
+<h4>🛡️ P2: INFECTION PREVENTION PROTOCOL (Final)</h4>
+<h5>Pre-Treatment Screening Status</h5>
+<table>
+  <tr><th>Screening Test</th><th>Current Status</th><th>Required Action</th></tr>
+  <tr><td>TB Screening</td><td>${patient.tbStatus || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>HBsAg</td><td>${patient.hbsAg || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Anti-HBs</td><td>${patient.antiHBs || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Anti-HBc</td><td>${patient.antiHBc || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Anti-HCV</td><td>${patient.antiHCV || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>HIV</td><td>${patient.antiHIV || 'Unknown'}</td><td>[Action]</td></tr>
+</table>
 
-##SECTION:MONITORING##
-ROW|Baseline (NOW)|[comprehensive baseline tests]|[reason]
-ROW|Wk 2-4|[early safety labs]|[reason]
-ROW|Wk 14 (post-induction)|[response labs + TDM]|[STRIDE-II first checkpoint]
-ROW|Month 6|[labs + colonoscopy or MRE]|[endoscopic treat-to-target]
-ROW|Every 6 months|[maintenance labs]|[long-term safety]
-ROW|Annual|[annual surveillance]|[reason]
-TDM: [TDM timing, target trough, what to do if sub-therapeutic]
+<h5>Vaccination Status & Required Actions</h5>
+<table>
+  <tr><th>Vaccine</th><th>Status</th><th>Action Required</th></tr>
+  <tr><td>Influenza</td><td>${patient.vaccines?.influenza || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>COVID-19</td><td>${patient.vaccines?.covid19 || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Pneumococcal</td><td>${patient.vaccines?.pneumococcal || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Hepatitis B</td><td>${patient.vaccines?.hepatitisB || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>Zoster</td><td>${patient.vaccines?.zoster || 'Unknown'}</td><td>[Action]</td></tr>
+  <tr><td>MMR/Varicella (LIVE)</td><td>${patient.vaccines?.mmr || 'Unknown'}</td><td>[Action]</td></tr>
+</table>
 
-##SECTION:COMORBIDITIES##
-ROW|${patient.comorbidities?.[0]||'N/A'}|[management points]
-ROW|${patient.comorbidities?.[1]||'N/A'}|[management points]
-ROW|${patient.eim?'EIM: '+patient.eim:'Extraintestinal Manifestations'}|[biologic preference, referral]
-ROW|Nutritional Status Albumin ${patient.albumin}|[dietitian referral, protein sources, IV iron, recheck]
-ROW|${patient.specialNotes?.[0]||'Special Considerations'}|[management]
+<h4>💊 P3: TREATMENT & MONITORING PROTOCOL (Final)</h4>
+<h5>Primary Treatment Strategy</h5>
+<table>
+  <tr><th>Component</th><th>Specification</th></tr>
+  <tr><td>Recommended Agent</td><td>[Specific biologic or small molecule]</td></tr>
+  <tr><td>Rationale</td><td>[Why this agent based on prior failures: ${patient.priorFailed}]</td></tr>
+  <tr><td>Induction Dose</td><td>[Dose]</td></tr>
+  <tr><td>Maintenance Dose</td><td>[Dose]</td></tr>
+  <tr><td>Adjunct Therapy</td><td>[5-ASA, steroids, etc.]</td></tr>
+</table>
 
-##SECTION:ALERTS##
-ALERT_DANGER: [most urgent clinical danger — specific not generic]
-ALERT_DANGER: [second danger]
-ALERT_WARNING: [warning 1]
-ALERT_WARNING: [warning 2]
-ALERT_WARNING: [warning 3]
+<p><b>Alternative Options:</b><br>
+<ul>
+  <li>[Option 1]</li>
+  <li>[Option 2]</li>
+</ul></p>
 
-##SECTION:EVIDENCE##
-- [guideline 1 with year]
-- [guideline 2 with year]
-- [guideline 3 with year]
-- [trial 4 with year specific to recommended drug]
-- [trial 5 with year]
-- [consensus 6 with year]
+<h5>Laboratory Monitoring Schedule</h5>
+<table>
+  <tr><th>Timepoint</th><th>Tests Required</th><th>Action/Rationale</th></tr>
+  <tr><td>BASELINE</td><td>[Tests]</td><td>[Rationale]</td></tr>
+  <tr><td>Week 4/14</td><td>[Tests]</td><td>[Rationale]</td></tr>
+  <tr><td>Month 6</td><td>[Tests]</td><td>[Rationale]</td></tr>
+</table>
 
-##SECTION:PATIENT_TELUGU##
-GREETING: [warm greeting in ${lang} using patient name]
-CONDITION_EXPLAIN: [2-3 sentences in ${lang} explaining diagnosis simply]
-CAUSE_EXPLAIN: [2 sentences in ${lang}: not patient's fault, not contagious, treatable]
-MEDICATION_NAME: [drug name]
-MEDICATION_EXPLAIN: [2 sentences in ${lang} — use tech analogy if software engineer]
-MEDICATION_SCHEDULE: [schedule in ${lang}]
-URGENCY_MESSAGE: [1 sentence in ${lang}: keep taking even when feeling better]
+<h5>Therapeutic Drug Monitoring (TDM)</h5>
+<ul>
+  <li><b>First TDM:</b> [When to check]</li>
+  <li><b>Subsequent:</b> [Reactive vs Proactive]</li>
+</ul>
 
-TESTS_NEEDED:
-- [test 1 in ${lang}]
-- [test 2 in ${lang}]
-- [test 3 in ${lang}]
+<h5>Drug-Specific Safety Monitoring</h5>
+<ul>
+  <li>[Risk 1]</li>
+  <li>[Risk 2]</li>
+</ul>
 
-GOALS_TABLE:
-ROW|[Month 1 in ${lang}]|[goal in ${lang}]|[measurement in ${lang}]
-ROW|[Month 3-4 in ${lang}]|[goal in ${lang}]|[measurement in ${lang}]
-ROW|[Month 6-12 in ${lang}]|[goal in ${lang}]|[measurement in ${lang}]
-ROW|[Long-term in ${lang}]|[goal in ${lang}]|[measurement in ${lang}]
+<h5>Cancer Surveillance Protocol</h5>
+<table>
+  <tr><th>Cancer Type</th><th>Surveillance Plan</th></tr>
+  <tr><td>Colorectal Cancer</td><td>[Plan]</td></tr>
+  <tr><td>Skin Cancer</td><td>[Plan]</td></tr>
+</table>
 
-DIET_HELP: [foods that help in ${lang}]
-DIET_AVOID: [foods to avoid in ${lang}]
-LIFESTYLE: [lifestyle tips in ${lang} including occupation and smoking]
-EMERGENCY_SIGNS: [emergency signs in ${lang} as bullet list]
-CLOSING_MESSAGE: [warm closing in ${lang} mentioning patient name and normal life]
+<h3>ITERATION 4 — FINAL QUALITY CHECK</h3>
+<table>
+  <tr><th>Quality Criterion</th><th>Status</th></tr>
+  <tr><td>KP-3P all components addressed</td><td>✅ Complete</td></tr>
+  <tr><td>STRIDE-II targets specified</td><td>✅ Complete</td></tr>
+  <tr><td>Infection screening verified</td><td>[Status]</td></tr>
+  <tr><td>Treatment monitoring in place</td><td>✅ Complete</td></tr>
+</table>
 
-##SECTION:CONTACT##
-DOCTOR: Dr. Kiran Peddi
-TITLE: Gastroenterologist & IBD Specialist
-CLINIC: Center for IBD, Yashoda Hospital, Somajiguda & Gastro Care Clinics, Gachibowli
-PHONE_OFFICE: 9390150150
-PHONE_EMERGENCY: 9581000505
-WEBSITE: www.drkiranpeddi.com
-HOURS: Mon-Fri 9AM-5PM | Sat 9AM-4PM
-
+<h4>Guidelines Referenced</h4>
+<ul>
+  <li>[Guideline 1]</li>
+  <li>[Guideline 2]</li>
+</ul>
 ---END TEMPLATE---
 
 PATIENT DATA:
@@ -164,5 +200,6 @@ Prior Failed: ${patient.priorFailed}
 TB: ${patient.tbStatus} | HBsAg: ${patient.hbsAg} | Anti-HBs: ${patient.antiHBs} | Anti-HBc: ${patient.antiHBc}
 Anti-HCV: ${patient.antiHCV} | Anti-HIV: ${patient.antiHIV}
 Comorbidities: ${patient.comorbidities?.join(', ')||'None'} | EIM: ${patient.eim||'None'}
-Special: ${patient.specialNotes?.join('; ')||'None'} | Language: ${lang}`;
+Special: ${patient.specialNotes?.join('; ')||'None'}
+`;
 }

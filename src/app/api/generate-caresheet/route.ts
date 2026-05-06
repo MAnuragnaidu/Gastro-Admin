@@ -45,18 +45,10 @@ export async function POST(req: NextRequest) {
     if (!modelOutput || modelOutput.length < 100)
       return NextResponse.json({ error: 'Empty model response' }, { status: 500 });
 
-    const sections = parseModelOutput(modelOutput);
-    const pdfBuffer = generateKP3PPdf(sections);
-
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="KP3P_${patient.name}_${Date.now()}.pdf"`,
-        'Cache-Control': 'no-store',
-      },
-    });
+    // Return the generated HTML content directly to the frontend for preview
+    return NextResponse.json({ htmlContent: modelOutput }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message ?? 'Unknown error' }, { status: 500 });
   }
 }
+
