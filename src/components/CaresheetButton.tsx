@@ -115,6 +115,10 @@ export function CaresheetButton({ patient, className, label }: { patient: Patien
             <div 
               style={{ padding: '30px', overflowY: 'auto', flex: 1, backgroundColor: '#f8fafc' }}
             >
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '8px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✏️ <b>Edit Mode Active:</b> You can click anywhere in the document below to edit the text before downloading.
+              </div>
+              
               {/* This is the container that will be captured by html2canvas */}
               <div 
                 ref={previewRef}
@@ -124,6 +128,8 @@ export function CaresheetButton({ patient, className, label }: { patient: Patien
                 }}
               >
                 <style dangerouslySetInnerHTML={{__html: `
+                  .kp3p-preview { outline: none; }
+                  .kp3p-preview:focus { box-shadow: inset 0 0 0 2px rgba(59,130,246,0.3); border-radius: 4px; }
                   .kp3p-preview h2 { color: #1e3a8a; font-size: 24px; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px; }
                   .kp3p-preview h3 { color: #2563eb; font-size: 18px; margin-top: 24px; }
                   .kp3p-preview h4 { color: #3b82f6; font-size: 16px; margin-top: 20px; }
@@ -134,9 +140,15 @@ export function CaresheetButton({ patient, className, label }: { patient: Patien
                   .kp3p-preview b { font-weight: 700; color: #0f172a; }
                   .kp3p-preview p { margin-bottom: 12px; }
                 `}} />
-                <div className="kp3p-preview" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                <div 
+                  className="kp3p-preview" 
+                  contentEditable={true} 
+                  suppressContentEditableWarning={true}
+                  dangerouslySetInnerHTML={{ __html: htmlContent }} 
+                />
               </div>
             </div>
+
 
             <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button 
