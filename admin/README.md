@@ -42,7 +42,7 @@ After changing env vars, restart `npm run dev`.
 ## Care sheet generation
 
 - **UI:** Patient assessment → **Download KP-3P Care Sheet** (`src/components/CaresheetButton.tsx`).
-- **API:** `POST /api/generate-caresheet` — streams HTML as **`text/plain`** (not JSON). Max duration 300s ([`vercel.json`](vercel.json)).
+- **API:** `POST /api/generate-caresheet` — streams HTML as **`text/plain`** (not JSON). No timeout limit on Cloud Run (configured for 60 minutes).
 - **LLM:** [`src/lib/llm/`](src/lib/llm/) — `claudeProvider.ts` / `geminiProvider.ts`, selected in [`index.ts`](src/lib/llm/index.ts).
 - **Guidelines:** `medical-doc/IBD_Clinical_Rulebook_Final2.pdf` (text cached to `IBD_Clinical_Rulebook_Final2.txt` on first use; `.txt` is gitignored).
 
@@ -65,11 +65,77 @@ After changing env vars, restart `npm run dev`.
 
 Legacy/script-only: `test:openrouter`, `test:generate-care-sheet`, `seed:care-sheet-prompt`.
 
-## Deploy on Vercel
+## Deploy on Google Cloud Run
 
-1. Set the project **Root Directory** to `admin` (not the monorepo root).
-2. Add env vars from `.env.example` in the Vercel dashboard.
-3. Build uses [`vercel.json`](vercel.json): `seed:rulebook-text`, `prisma generate`, `next build`.
+### Prerequisites
+
+- Google Cloud CLI installed and authenticated (`gcloud auth login`)
+- Docker Desktop installed and running
+- Google Cloud project: `kp3p-admin-prod`
+
+### First time setup (already done — for reference)
+
+```bash
+gcloud config set project kp3p-admin-prod
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com secretmanager.googleapis.com
+gcloud artifacts repositories create kp3p-repo --repository-format=docker --location=asia-south1
+```
+
+### Secrets (stored in Google Secret Manager)
+
+| Secret name | Purpose |
+|-------------|---------|
+| `ANTHROPIC_API_KEY` | Anthropic Claude API key |
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `POSTGRES_PRISMA_URL` | Pooled Postgres connection URL |
+| `POSTGRES_URL_NON_POOLING` | Direct Postgres URL for migrations |
+| `LLM_PROVIDER` | `claude` or `gemini` |
+
+### Manual deploy
+
+```bash
+cd admin
+gcloud builds submit --tag asia-south1-docker.pkg.dev/kp3p-admin-prod/kp3p-repo/kp3p-admin:latest .
+gcloud run deploy kp3p-admin \
+  --image asia-south1-docker.pkg.dev/kp3p-admin-prod/kp3p-repo/kp3p-admin:latest \
+  --region asia-south1 \
+  --project kp3p-admin-prod
+```
+
+### Auto deploy
+
+Every push to the `main` branch triggers Cloud Build automatically via [`cloudbuild.yaml`](cloudbuild.yaml).
+
+Monitor builds at: [Cloud Build console](https://console.cloud.google.com/cloud-build/builds?project=kp3p-admin-prod)
+
+### Run DB migrations (run after first deploy or schema changes)
+
+```bash
+gcloud run jobs execute migrate-db --region asia-south1 --wait
+```
+
+### Production URLs
+
+- Cloud Run: [https://kp3p-admin-452734733972.asia-south1.run.app](https://kp3p-admin-452734733972.asia-south1.run.app)
+- Custom domain: [https://www.gastroai.in](https://www.gastroai.in)
+
+## Docker
+
+- **Dockerfile location:** `admin/Dockerfile`
+- **Multi-stage build:** deps → builder → runner
+- **Build context:** must be run from the `admin/` directory
+- **Port:** 8080 (Cloud Run requirement)
+
+Test locally:
+
+```bash
+docker build -t kp3p-admin .
+docker run -p 8080:8080 \
+  -e POSTGRES_PRISMA_URL="postgresql://test" \
+  -e LLM_PROVIDER="claude" \
+  -e ANTHROPIC_API_KEY="sk-test" \
+  kp3p-admin
+```
 
 ## Project layout (high level)
 

@@ -79,7 +79,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 | Claude | `claude-sonnet-4-6` | [`admin/src/lib/llm/claudeProvider.ts`](admin/src/lib/llm/claudeProvider.ts) |
 | Gemini | `gemini-2.5-flash` | [`admin/src/lib/llm/geminiProvider.ts`](admin/src/lib/llm/geminiProvider.ts) |
 
-Selection and lazy env validation: [`admin/src/lib/llm/index.ts`](admin/src/lib/llm/index.ts). The route [`admin/src/app/api/generate-caresheet/route.ts`](admin/src/app/api/generate-caresheet/route.ts) streams HTML as **`text/plain`** via `generateCarePlan()` (chunked response for long generations on Vercel).
+Selection and lazy env validation: [`admin/src/lib/llm/index.ts`](admin/src/lib/llm/index.ts). The route [`admin/src/app/api/generate-caresheet/route.ts`](admin/src/app/api/generate-caresheet/route.ts) streams HTML as **`text/plain`** chunks via `generateCarePlan()` — runs on Cloud Run with 60-minute timeout, no Vercel serverless limit.
 
 After changing `LLM_PROVIDER` or keys, **restart** `npm run dev`.
 
@@ -99,12 +99,44 @@ From `admin/`:
 
 See [`admin/package.json`](admin/package.json) for additional script entries (OpenRouter / legacy test utilities).
 
-## Deploy on Vercel
+## Deployment
 
-| App | Root Directory | Notes |
-|-----|----------------|-------|
-| Admin | `admin` | Set all env vars from `admin/.env.example`. Build runs `seed:rulebook-text` per [`admin/vercel.json`](admin/vercel.json). Care sheet API `maxDuration` = 300s. |
-| Patient intake | `Patient-intake-form` | Set `NEXT_PUBLIC_API_URL` to production admin URL. |
+### Admin app — Google Cloud Run
+
+- Hosted on Google Cloud Run (project: `kp3p-admin-prod`, region: `asia-south1`)
+- Production URL: [https://kp3p-admin-452734733972.asia-south1.run.app](https://kp3p-admin-452734733972.asia-south1.run.app)
+- Custom domain: [https://www.gastroai.in](https://www.gastroai.in) (via Cloudflare proxy)
+- Docker image stored in Artifact Registry: `asia-south1-docker.pkg.dev/kp3p-admin-prod/kp3p-repo/kp3p-admin`
+- Auto-deploys on every push to `main` branch via Cloud Build trigger (config: [`admin/cloudbuild.yaml`](admin/cloudbuild.yaml))
+- Secrets managed via Google Cloud Secret Manager (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `LLM_PROVIDER`)
+- Container timeout: 60 minutes (solves LLM generation timeout)
+
+To manually deploy:
+
+```bash
+cd admin
+gcloud builds submit --tag asia-south1-docker.pkg.dev/kp3p-admin-prod/kp3p-repo/kp3p-admin:latest .
+gcloud run deploy kp3p-admin \
+  --image asia-south1-docker.pkg.dev/kp3p-admin-prod/kp3p-repo/kp3p-admin:latest \
+  --region asia-south1 \
+  --project kp3p-admin-prod
+```
+
+### Patient intake app — Vercel
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `Patient-intake-form` |
+| `NEXT_PUBLIC_API_URL` | `https://www.gastroai.in` |
+
+## Infrastructure
+
+- **Google Cloud Project:** `kp3p-admin-prod`
+- **Region:** `asia-south1` (Mumbai)
+- **Services used:** Cloud Run, Artifact Registry, Cloud Build, Secret Manager
+- **Domain:** `gastroai.in` managed via Cloudflare (proxied) → Cloud Run
+- **SSL:** Cloudflare (Full mode)
+- **CI/CD:** Cloud Build triggers on push to `main` → builds Docker image → deploys to Cloud Run
 
 ## Tech stack
 
