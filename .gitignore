@@ -45,8 +45,9 @@ client_secret*.json
 *.sqlite
 *.sqlite3
 
-# --- Prisma (admin) — generated client ---
+# --- Prisma — generated client ---
 admin/src/generated/prisma/
+src/generated/prisma/
 
 # --- Logs & debug ---
 logs/
