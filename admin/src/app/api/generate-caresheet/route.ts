@@ -51,7 +51,47 @@ function httpStatusFromUnknown(err: unknown): number | undefined {
     const s = (err as { status: unknown }).status;
     return typeof s === 'number' ? s : undefined;
   }
+  const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : '';
+  const bracketMatch = msg.match(/\[(\d{3})\s/);
+  if (bracketMatch) return Number.parseInt(bracketMatch[1], 10);
   return undefined;
+}
+
+function userFacingLlmError(err: unknown): { message: string; status: number } {
+  const msg = err instanceof Error ? err.message : String(err);
+  const lower = msg.toLowerCase();
+  const status = httpStatusFromUnknown(err);
+
+  if (status === 503 || lower.includes('high demand') || lower.includes('overloaded')) {
+    return {
+      message:
+        'The AI model is temporarily overloaded. Please wait a minute and try again.',
+      status: 503,
+    };
+  }
+  if (lower.includes('failed to parse stream')) {
+    return {
+      message:
+        'The AI response was interrupted. Please try again — if it keeps failing, switch to Claude (LLM_PROVIDER=claude).',
+      status: 502,
+    };
+  }
+  if (status === 429 || lower.includes('quota') || lower.includes('rate limit')) {
+    const provider = (process.env.LLM_PROVIDER ?? 'gemini').trim().toLowerCase();
+    if (provider === 'gemini') {
+      return {
+        message:
+          'Gemini rate limit or quota exceeded. Wait and retry, or check usage in Google AI Studio.',
+        status: 429,
+      };
+    }
+    return {
+      message:
+        'Anthropic rate limit or quota exceeded. Wait and retry, or check your plan and usage at https://docs.anthropic.com/',
+      status: 429,
+    };
+  }
+  return { message: USER_FRIENDLY_502, status: 502 };
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -131,39 +171,55 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
       const errStatus = httpStatusFromUnknown(callErr);
       if (errStatus === 429) {
-        logCaresheetFailure(patientIdForLog, 'claude_rate_limit', callErr, { status: errStatus });
-        return NextResponse.json(
-          {
-            error:
-              'Anthropic rate limit or quota exceeded. Wait and retry, or check your plan and usage at https://docs.anthropic.com/',
-          },
-          { status: 429 },
-        );
+        const { message, status } = userFacingLlmError(callErr);
+        logCaresheetFailure(patientIdForLog, 'llm_rate_limit', callErr, { status: errStatus });
+        return NextResponse.json({ error: message }, { status });
       }
-      logCaresheetFailure(patientIdForLog, 'claude_messages_stream_threw', callErr);
+      if (errStatus === 503) {
+        const { message, status } = userFacingLlmError(callErr);
+        logCaresheetFailure(patientIdForLog, 'llm_overloaded', callErr, { status: errStatus });
+        return NextResponse.json({ error: message }, { status });
+      }
+      const userErr = userFacingLlmError(callErr);
+      if (userErr.status !== 502) {
+        logCaresheetFailure(patientIdForLog, 'llm_provider_error', callErr, { status: userErr.status });
+        return NextResponse.json({ error: userErr.message }, { status: userErr.status });
+      }
+      logCaresheetFailure(patientIdForLog, 'llm_messages_stream_threw', callErr);
       return NextResponse.json({ error: USER_FRIENDLY_502 }, { status: 502 });
     }
 
     const encoder = new TextEncoder();
     let outputChars = 0;
+    let fullText = '';
+
+    try {
+      for await (const chunk of textStream) {
+        outputChars += chunk.length;
+        fullText += chunk;
+      }
+      console.log('[KP3P] LLM output payload', {
+        patientId: patientIdForLog,
+        outputChars,
+        estimatedOutputTokens: Math.ceil(outputChars / 4),
+      });
+    } catch (streamErr: unknown) {
+      if (isLikelyAbortError(streamErr)) {
+        logCaresheetFailure(patientIdForLog, 'llm_stream_aborted', streamErr);
+        return new NextResponse(null, { status: 499 });
+      }
+      const { message, status } = userFacingLlmError(streamErr);
+      logCaresheetFailure(patientIdForLog, 'llm_stream_collect_failed', streamErr, { status });
+      return NextResponse.json({ error: message }, { status });
+    }
 
     const readable = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        try {
-          for await (const chunk of textStream) {
-            outputChars += chunk.length;
-            controller.enqueue(encoder.encode(chunk));
-          }
-          console.log('[KP3P] LLM output payload', {
-            patientId: patientIdForLog,
-            outputChars,
-            estimatedOutputTokens: Math.ceil(outputChars / 4),
-          });
-          controller.close();
-        } catch (err) {
-          logCaresheetFailure(patientIdForLog, 'llm_stream_pipe_failed', err);
-          controller.error(err);
+      start(controller) {
+        const chunkSize = 2048;
+        for (let i = 0; i < fullText.length; i += chunkSize) {
+          controller.enqueue(encoder.encode(fullText.slice(i, i + chunkSize)));
         }
+        controller.close();
       },
     });
 

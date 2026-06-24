@@ -24,34 +24,35 @@ const KP3P_PREVIEW_STYLES = `
     border-radius: 4px;
   }
 
-  /* ── Document title (h2) — professional gradient banner ── */
+  /* ── Document title (h2) ── */
   .kp3p-preview h2 {
     font-size: 16px;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #ffffff;
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    color: #0f172a;
+    background: transparent;
     margin: 0 -52px 20px -52px;
-    padding: 15px 52px;
+    padding: 15px 52px 12px 52px;
     border: none;
+    border-bottom: 2px solid #0f172a;
     page-break-after: avoid;
     break-after: avoid;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: none;
   }
 
-  /* ── Major sections (h3) — prominent blue accent ── */
+  /* ── Major sections (h3) ── */
   .kp3p-preview h3 {
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #1e40af;
+    color: #0f172a;
     background: transparent;
     margin: 18px 0 10px 0;
     padding: 0 0 6px 0;
     border: none;
-    border-bottom: 2px solid #1e40af;
+    border-bottom: 2px solid #cbd5e1;
     page-break-after: avoid;
     break-after: avoid;
   }
@@ -131,22 +132,22 @@ const KP3P_PREVIEW_STYLES = `
   .kp3p-preview thead tr,
   .kp3p-preview table > tr:first-child,
   .kp3p-preview tbody > tr:first-child {
-    background: #1e40af;
+    background: #f1f5f9;
   }
   .kp3p-preview thead th,
   .kp3p-preview th,
   .kp3p-preview thead tr td,
   .kp3p-preview table > tr:first-child td,
   .kp3p-preview tbody > tr:first-child td {
-    background: #1e40af;
-    color: #ffffff;
+    background: #f1f5f9;
+    color: #0f172a;
     font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 9px 12px;
-    border: 1px solid #1e40af;
-    border-right: 1px solid rgba(255,255,255,0.2);
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
     text-align: left;
     vertical-align: middle;
   }
@@ -154,16 +155,16 @@ const KP3P_PREVIEW_STYLES = `
   .kp3p-preview thead tr td:last-child,
   .kp3p-preview table > tr:first-child td:last-child,
   .kp3p-preview tbody > tr:first-child td:last-child {
-    border-right: 1px solid #1e40af;
+    border-right: 1px solid #cbd5e1;
   }
 
   /* Body cells */
   .kp3p-preview td {
-    padding: 8px 12px;
+    padding: 10px 14px;
     border: 1px solid #e2e8f0;
     color: #1e293b;
     vertical-align: top;
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
   /* Zebra striping on body rows (skip the first row which is header) */
@@ -214,7 +215,41 @@ const KP3P_PREVIEW_STYLES = `
   .kp3p-preview h2 + p,
   .kp3p-preview h3 + p,
   .kp3p-preview h4 + p { page-break-before: avoid; break-before: avoid; }
+
+  /* ── PDF export overrides (html2canvas slice; margins applied in JS) ── */
+  .kp3p-preview-pdf {
+    padding: 4px 0 12px 0;
+  }
+  .kp3p-preview-pdf h2 {
+    margin: 0 0 22px 0;
+    padding: 0 0 10px 0;
+  }
+  .kp3p-preview-pdf h3 {
+    margin: 22px 0 12px 0;
+    padding: 0 0 8px 0;
+  }
+  .kp3p-preview-pdf h4 {
+    margin: 18px 0 8px 0;
+  }
+  .kp3p-preview-pdf p {
+    margin: 0 0 10px 0;
+  }
+  .kp3p-preview-pdf table {
+    margin: 14px 0 22px 0;
+  }
+  .kp3p-preview-pdf ul,
+  .kp3p-preview-pdf ol {
+    margin: 8px 0 16px 0;
+  }
+  .kp3p-preview-pdf hr {
+    margin: 20px 0;
+  }
 `;
+
+/** A4 page margins (mm) applied when placing slices on each PDF page */
+const PDF_PAGE_MARGIN = { top: 14, bottom: 16, left: 15, right: 15 } as const;
+/** Extra canvas px (scale 2) kept between page slices for breathing room */
+const PDF_SLICE_GAP_PX = 12;
 
 
 function isAbortError(e: unknown): boolean {
@@ -329,7 +364,7 @@ function buildPdfHost(sectionHtml: string, widthPx: number): HTMLDivElement {
     width: `${widthPx}px`,
     boxSizing: 'border-box',
     backgroundColor: '#ffffff',
-    padding: '50px 56px',
+    padding: '44px 48px',
     fontFamily: "-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
     color: '#0f172a',
     lineHeight: '1.62',
@@ -343,7 +378,7 @@ function buildPdfHost(sectionHtml: string, widthPx: number): HTMLDivElement {
   styleEl.textContent = KP3P_PREVIEW_STYLES;
   host.appendChild(styleEl);
   const inner = document.createElement('div');
-  inner.className = 'kp3p-preview';
+  inner.className = 'kp3p-preview kp3p-preview-pdf';
   inner.innerHTML = sectionHtml;
   host.appendChild(inner);
   document.body.appendChild(host);
@@ -385,10 +420,13 @@ async function htmlHostToPdf(host: HTMLElement, fileName: string): Promise<void>
 
   try {
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfPageWidth = pdf.internal.pageSize.getWidth();   // 210mm
-    const pdfPageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+    const pdfPageWidth = pdf.internal.pageSize.getWidth();
+    const pdfPageHeight = pdf.internal.pageSize.getHeight();
+    const contentWidthMm =
+      pdfPageWidth - PDF_PAGE_MARGIN.left - PDF_PAGE_MARGIN.right;
+    const contentHeightMm =
+      pdfPageHeight - PDF_PAGE_MARGIN.top - PDF_PAGE_MARGIN.bottom;
 
-    // Render the full host at 2x scale
     const fullCanvas = await html2canvas(host, {
       scale: 2,
       useCORS: true,
@@ -398,130 +436,151 @@ async function htmlHostToPdf(host: HTMLElement, fileName: string): Promise<void>
 
     const canvasWidth = fullCanvas.width;
     const canvasHeight = fullCanvas.height;
-
-    // px per mm on the canvas (scaled)
     const pxPerMm = canvasWidth / pdfPageWidth;
-
-    // A4 page height in canvas pixels
-    const pageHeightPx = pdfPageHeight * pxPerMm;
+    const pageContentHeightPx = contentHeightMm * pxPerMm;
 
     const inner = host.querySelector('.kp3p-preview') ?? host;
     const hostRect = host.getBoundingClientRect();
-
-    // Convert a CSS pixel y to canvas-space y (host-relative, scaled by 2)
     const toCanvasPx = (cssY: number) => (cssY - hostRect.top) * 2;
 
-    // 1) Collect granular break candidates — bottom edges of small block elements.
-    //    We cut at these positions when we have to break inside a region.
-    const blockEls = inner.querySelectorAll('tr, p, h2, h3, h4, h5, li');
+    type Range = { top: number; bottom: number; height: number };
+
+    // Atomic blocks — never slice through the middle of these
+    const atomicBlocks: Range[] = [];
+    inner
+      .querySelectorAll('tr, li, h2, h3, h4, h5, thead, tbody')
+      .forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const top = toCanvasPx(rect.top);
+        const bottom = toCanvasPx(rect.bottom);
+        if (bottom > top + 1) atomicBlocks.push({ top, bottom, height: bottom - top });
+      });
+
     const breakCandidates: number[] = [0];
-    blockEls.forEach((el) => {
+    inner.querySelectorAll('tr, p, h2, h3, h4, h5, li, table, hr').forEach((el) => {
       const rect = el.getBoundingClientRect();
       breakCandidates.push(toCanvasPx(rect.bottom));
     });
     breakCandidates.push(canvasHeight);
+    const sortedBreaks = [...new Set(breakCandidates.map((c) => Math.round(c)))].sort(
+      (a, b) => a - b,
+    );
 
-    // 2) Collect "keep together" ranges — tables and h3-sections.
-    //    If one of these straddles a page boundary AND would fit on a fresh page,
-    //    we push it to the next page instead of slicing it.
-    type Range = { top: number; bottom: number; height: number };
     const keepTogether: Range[] = [];
-
-    // Tables — keep each whole table on one page if possible
     inner.querySelectorAll('table').forEach((t) => {
       const rect = t.getBoundingClientRect();
+      const top = toCanvasPx(rect.top);
+      const bottom = toCanvasPx(rect.bottom);
+      const height = bottom - top;
+      if (height <= pageContentHeightPx * 0.92) {
+        keepTogether.push({ top, bottom, height });
+      }
+    });
+
+    // Keep each table row together when the table spans multiple pages
+    inner.querySelectorAll('table tr').forEach((tr) => {
+      const rect = tr.getBoundingClientRect();
       const top = toCanvasPx(rect.top);
       const bottom = toCanvasPx(rect.bottom);
       keepTogether.push({ top, bottom, height: bottom - top });
     });
 
-    // h3 sections — content from each h3 to the next h3 (or end of inner)
-    const h3s = Array.from(inner.querySelectorAll('h3'));
-    const innerBottom = toCanvasPx(inner.getBoundingClientRect().bottom);
-    h3s.forEach((h3, i) => {
-      const rect = h3.getBoundingClientRect();
-      const top = toCanvasPx(rect.top);
-      const bottom =
-        i < h3s.length - 1
-          ? toCanvasPx(h3s[i + 1].getBoundingClientRect().top)
-          : innerBottom;
-      keepTogether.push({ top, bottom, height: bottom - top });
+    // Keep heading + immediate following block together
+    inner.querySelectorAll('h2, h3, h4').forEach((heading) => {
+      let sibling = heading.nextElementSibling;
+      while (sibling && !['P', 'TABLE', 'UL', 'OL', 'H2', 'H3', 'H4', 'H5'].includes(sibling.tagName)) {
+        sibling = sibling.nextElementSibling;
+      }
+      if (!sibling || ['H2', 'H3', 'H4'].includes(sibling.tagName)) return;
+      const hRect = heading.getBoundingClientRect();
+      const sRect = sibling.getBoundingClientRect();
+      const top = toCanvasPx(hRect.top);
+      const bottom = toCanvasPx(sRect.bottom);
+      const height = bottom - top;
+      if (height <= pageContentHeightPx * 0.85) {
+        keepTogether.push({ top, bottom, height });
+      }
     });
 
-    // 2b) Collect FORCED page-break positions — headings whose text matches
-    //     FORCED_BREAK_BEFORE_PATTERNS will force a new page to start at them.
     const forcedBreaks: number[] = [];
     inner.querySelectorAll('h2, h3, h4, h5').forEach((h) => {
       const text = (h.textContent ?? '').replace(/\s+/g, ' ').trim();
       if (FORCED_BREAK_BEFORE_PATTERNS.some((p) => p.test(text))) {
-        const rect = h.getBoundingClientRect();
-        const top = toCanvasPx(rect.top);
-        // Skip if this heading is at the very start of the document — no point
-        // forcing a break before content that hasn't started yet.
+        const top = toCanvasPx(h.getBoundingClientRect().top);
         if (top > 10) forcedBreaks.push(top);
       }
     });
 
-    // 3) Slice the canvas into PDF pages
+    const isCutThroughAtomic = (cut: number): boolean =>
+      atomicBlocks.some(({ top, bottom }) => cut > top + 3 && cut < bottom - 3);
+
+    const pickCutBefore = (pageStart: number, limit: number): number => {
+      const cands = sortedBreaks.filter((c) => c > pageStart + 8 && c <= limit);
+      for (let i = cands.length - 1; i >= 0; i--) {
+        const cut = cands[i];
+        if (!isCutThroughAtomic(cut)) return cut;
+      }
+      return limit;
+    };
+
     let pageStart = 0;
     let isFirstPage = true;
 
-    while (pageStart < canvasHeight) {
-      const pageEnd = pageStart + pageHeightPx;
+    while (pageStart < canvasHeight - 1) {
+      const idealEnd = pageStart + pageContentHeightPx - PDF_SLICE_GAP_PX;
       let safeCut: number;
 
-      if (pageEnd >= canvasHeight) {
-        // Last page — just take the rest
+      if (idealEnd >= canvasHeight - 2) {
         safeCut = canvasHeight;
       } else {
-        // Priority 1: forced page breaks within this page → cut at the EARLIEST one
         const forcedInPage = forcedBreaks.filter(
-          (f) => f > pageStart && f <= pageEnd,
+          (f) => f > pageStart + 8 && f <= idealEnd,
         );
 
         if (forcedInPage.length > 0) {
           safeCut = Math.min(...forcedInPage);
         } else {
-          // Priority 2: push keep-together ranges that straddle the boundary
-          //            if they would fit on a fresh page
           const straddlers = keepTogether.filter(
             (r) =>
-              r.top > pageStart &&
-              r.top < pageEnd &&
-              r.bottom > pageEnd &&
-              r.height <= pageHeightPx,
+              r.top > pageStart + 8 &&
+              r.top < idealEnd &&
+              r.bottom > idealEnd &&
+              r.height <= pageContentHeightPx * 0.92,
           );
 
           if (straddlers.length > 0) {
             const earliestTop = Math.min(...straddlers.map((r) => r.top));
-            const candsBefore = breakCandidates.filter(
-              (c) => c > pageStart && c <= earliestTop,
-            );
-            if (candsBefore.length > 0) {
-              safeCut = Math.max(...candsBefore);
-            } else {
-              const cands = breakCandidates.filter(
-                (c) => c > pageStart && c <= pageEnd,
-              );
-              safeCut = cands.length > 0 ? Math.max(...cands) : pageEnd;
-            }
+            safeCut = pickCutBefore(pageStart, earliestTop);
           } else {
-            // Priority 3: latest granular cut within the page
-            const cands = breakCandidates.filter(
-              (c) => c > pageStart && c <= pageEnd,
-            );
-            safeCut = cands.length > 0 ? Math.max(...cands) : pageEnd;
+            safeCut = pickCutBefore(pageStart, idealEnd);
           }
+
+          // Orphan heading: don't leave a lone heading at the bottom of a page
+          inner.querySelectorAll('h2, h3, h4, h5').forEach((h) => {
+            const rect = h.getBoundingClientRect();
+            const top = toCanvasPx(rect.top);
+            const bottom = toCanvasPx(rect.bottom);
+            if (
+              top > pageStart + pageContentHeightPx * 0.78 &&
+              top < safeCut &&
+              bottom > safeCut - 4
+            ) {
+              safeCut = Math.min(safeCut, top);
+            }
+          });
+          safeCut = pickCutBefore(pageStart, safeCut);
         }
 
-        // Safety: ensure forward progress
-        if (safeCut <= pageStart) safeCut = pageEnd;
+        if (safeCut <= pageStart + 8) safeCut = idealEnd;
+        if (isCutThroughAtomic(safeCut)) {
+          safeCut = pickCutBefore(pageStart, safeCut - 4);
+        }
+        if (safeCut <= pageStart + 8) safeCut = Math.min(idealEnd, canvasHeight);
       }
 
       const sliceHeight = Math.round(safeCut - pageStart);
       if (sliceHeight <= 0) break;
 
-      // Slice the canvas for this page
       const pageCanvas = document.createElement('canvas');
       pageCanvas.width = canvasWidth;
       pageCanvas.height = sliceHeight;
@@ -544,7 +603,14 @@ async function htmlHostToPdf(host: HTMLElement, fileName: string): Promise<void>
       const sliceHeightMm = sliceHeight / pxPerMm;
 
       if (!isFirstPage) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfPageWidth, sliceHeightMm);
+      pdf.addImage(
+        imgData,
+        'PNG',
+        PDF_PAGE_MARGIN.left,
+        PDF_PAGE_MARGIN.top,
+        contentWidthMm,
+        sliceHeightMm,
+      );
       isFirstPage = false;
 
       pageStart = safeCut;
@@ -562,19 +628,19 @@ const REVIEW_STEP_META: Record<
   { title: string; hint: string; fileSuffix: string }
 > = {
   1: {
-    title: 'Document 1 — Clinician Record',
-    hint: 'Review and edit Document 1, then approve to continue to Document 2.',
-    fileSuffix: 'DOC1_Clinician_Record',
+    title: 'Clinician Record',
+    hint: 'Review and edit the Clinician Record, then approve to continue to Patient Information.',
+    fileSuffix: 'Clinician_Record',
   },
   2: {
-    title: 'Document 2 — Patient Information Sheet',
-    hint: 'Review and edit Document 2, then approve to continue to Document 3.',
-    fileSuffix: 'DOC2_Patient_Information_Sheet',
+    title: 'Patient Information',
+    hint: 'Review and edit Patient Information, then approve to continue to Prescription.',
+    fileSuffix: 'Patient_Information',
   },
   3: {
-    title: 'Document 3 — Prescription Sheet',
-    hint: 'Review and edit Document 3. Once approved, download all 3 PDFs.',
-    fileSuffix: 'DOC3_Prescription_Sheet',
+    title: 'Prescription',
+    hint: 'Review and edit the Prescription. Once approved, download all 3 PDFs.',
+    fileSuffix: 'Prescription',
   },
 };
 
@@ -740,17 +806,17 @@ export function CaresheetButton({
     try {
       await downloadSectionPdf(
         finalDocs.doc1,
-        `KP3P_${baseName}_DOC1_Clinician_Record.pdf`,
+        `KP3P_${baseName}_${REVIEW_STEP_META[1].fileSuffix}.pdf`,
         widthPx,
       );
       await downloadSectionPdf(
         finalDocs.doc2,
-        `KP3P_${baseName}_DOC2_Patient_Information_Sheet.pdf`,
+        `KP3P_${baseName}_${REVIEW_STEP_META[2].fileSuffix}.pdf`,
         widthPx,
       );
       await downloadSectionPdf(
         finalDocs.doc3,
-        `KP3P_${baseName}_DOC3_Prescription_Sheet.pdf`,
+        `KP3P_${baseName}_${REVIEW_STEP_META[3].fileSuffix}.pdf`,
         widthPx,
       );
 
@@ -972,6 +1038,7 @@ export function CaresheetButton({
                     {([1, 2, 3] as const).map((step) => {
                       const isApproved = step < reviewStep;
                       const isCurrent = step === reviewStep;
+                      const stepLabel = REVIEW_STEP_META[step].title;
                       return (
                         <span
                           key={step}
@@ -987,7 +1054,7 @@ export function CaresheetButton({
                             color: isCurrent ? '#fff' : isApproved ? '#166534' : '#64748b',
                           }}
                         >
-                          Doc {step}
+                          {stepLabel}
                           {isApproved ? ' ✓' : ''}
                         </span>
                       );
@@ -1132,7 +1199,7 @@ export function CaresheetButton({
                     opacity: pdfCaptureBusy ? 0.6 : 1,
                   }}
                 >
-                  Approve Document {reviewStep} →
+                  Approve {stepMeta.title} →
                 </button>
               )}
 
