@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { setPatientAuth, getPatientAuth } from '@/lib/intakeSession';
+import { setPatientAuth, getPatientAuth, PATIENT_ENTRY_KEY } from '@/lib/intakeSession';
 
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,13 +39,24 @@ export default function SignUpPage() {
       return;
     }
 
+    const normalizedPhone = phone.replace(/\D/g, '');
+    if (normalizedPhone && !/^[6-9]\d{9}$/.test(normalizedPhone)) {
+      setError('Phone number must be 10 digits and start with 6, 7, 8, or 9.');
+      return;
+    }
+
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       const res = await fetch(`${apiUrl}/api/patient-auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: normalizedPhone,
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -56,6 +66,14 @@ export default function SignUpPage() {
         return;
       }
 
+      sessionStorage.setItem(
+        PATIENT_ENTRY_KEY,
+        JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          contactPhone: normalizedPhone,
+        }),
+      );
       setPatientAuth(data.user);
       router.push('/form');
     } catch {
@@ -96,14 +114,6 @@ export default function SignUpPage() {
           color: var(--primary); font-weight: 500; text-decoration: none; cursor: pointer;
         }
         .auth-link-row a:hover { text-decoration: underline; }
-        .pw-wrap { position: relative; }
-        .pw-wrap .fi { padding-right: 44px; }
-        .pw-toggle {
-          position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-          background: none; border: none; cursor: pointer;
-          color: var(--text-muted); font-size: 13px; padding: 4px;
-        }
-        .pw-toggle:hover { color: var(--text); }
         .pw-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
       `}</style>
 
@@ -162,52 +172,48 @@ export default function SignUpPage() {
               </div>
 
               <div className="fg">
+                <label htmlFor="phone">Phone Number <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span></label>
+                <input
+                  id="phone"
+                  type="tel"
+                  className="fi"
+                  placeholder="e.g. 9876543210"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  pattern="[6-9][0-9]{9}"
+                  maxLength={10}
+                />
+              </div>
+
+              <div className="fg">
                 <label htmlFor="password">Password<span className="req">*</span></label>
-                <div className="pw-wrap">
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    className="fi"
-                    placeholder="Min. 8 characters"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="pw-toggle"
-                    onClick={() => setShowPassword(v => !v)}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
+                <input
+                  id="password"
+                  type="password"
+                  className="fi"
+                  placeholder="Min. 8 characters"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
                 <p className="pw-hint">Must be at least 8 characters</p>
               </div>
 
               <div className="fg">
                 <label htmlFor="confirmPassword">Confirm Password<span className="req">*</span></label>
-                <div className="pw-wrap">
-                  <input
-                    id="confirmPassword"
-                    type={showConfirm ? 'text' : 'password'}
-                    className="fi"
-                    placeholder="Re-enter your password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="pw-toggle"
-                    onClick={() => setShowConfirm(v => !v)}
-                    tabIndex={-1}
-                  >
-                    {showConfirm ? 'Hide' : 'Show'}
-                  </button>
-                </div>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  className="fi"
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
               </div>
 
               <button

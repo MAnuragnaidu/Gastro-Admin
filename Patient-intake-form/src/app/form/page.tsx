@@ -54,6 +54,7 @@ export default function FormPage() {
           ...prev,
           name: parsed.name || auth.name || prev.name,
           email: parsed.email || auth.email || prev.email,
+          contactPhone: parsed.contactPhone || prev.contactPhone,
         }));
       } catch (err) {
         console.error('Failed to parse patient_entry', err);
