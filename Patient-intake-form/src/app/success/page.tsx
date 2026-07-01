@@ -1,6 +1,16 @@
-import Link from 'next/link';
+ 'use client';
+
+import { useRouter } from 'next/navigation';
+import { clearPatientAuth } from '@/lib/intakeSession';
 
 export default function SuccessPage() {
+  const router = useRouter();
+
+  const handleReturnHome = () => {
+    clearPatientAuth();
+    router.push('/');
+  };
+
   return (
     <div className="page-root" style={{ justifyContent: 'center' }}>
       <header className="page-header" style={{ position: 'absolute', width: '100%' }}>
@@ -24,9 +34,14 @@ export default function SuccessPage() {
               Your intake form has been securely submitted to the clinical team. Thank you for providing this detailed information to help us prepare for your care.
             </p>
 
-            <Link href="/" className="btn-back" style={{ display: 'inline-flex' }}>
+            <button
+              type="button"
+              className="btn-back"
+              style={{ display: 'inline-flex' }}
+              onClick={handleReturnHome}
+            >
               Return to home
-            </Link>
+            </button>
           </div>
         </div>
       </main>

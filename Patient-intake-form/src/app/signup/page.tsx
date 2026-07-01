@@ -2,47 +2,57 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { setPatientAuth, getPatientAuth, INTAKE_SUBMITTED_KEY } from '@/lib/intakeSession';
+import { setPatientAuth, getPatientAuth } from '@/lib/intakeSession';
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem(INTAKE_SUBMITTED_KEY) === '1') {
-      return;
-    }
     if (getPatientAuth()) {
       router.replace('/form');
     }
   }, [router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email.trim() || !password) {
-      setError('Email and password are required.');
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      setError('All fields are required.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const res = await fetch(`${apiUrl}/api/patient-auth/login`, {
+      const res = await fetch(`${apiUrl}/api/patient-auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Login failed. Please try again.');
+        setError(data.error || 'Registration failed. Please try again.');
         return;
       }
 
@@ -83,8 +93,7 @@ export default function LoginPage() {
           text-align: center; font-size: 14px; color: var(--text-muted); margin-top: 4px;
         }
         .auth-link-row a {
-          color: var(--primary); font-weight: 500; text-decoration: none;
-          cursor: pointer;
+          color: var(--primary); font-weight: 500; text-decoration: none; cursor: pointer;
         }
         .auth-link-row a:hover { text-decoration: underline; }
         .pw-wrap { position: relative; }
@@ -95,6 +104,7 @@ export default function LoginPage() {
           color: var(--text-muted); font-size: 13px; padding: 4px;
         }
         .pw-toggle:hover { color: var(--text); }
+        .pw-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
       `}</style>
 
       <header className="page-header" style={{ position: 'absolute', width: '100%', top: 0 }}>
@@ -111,8 +121,8 @@ export default function LoginPage() {
       <main className="page-main" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80 }}>
         <div className="step-card" style={{ maxWidth: 440, width: '100%' }}>
           <div className="step-card-head" style={{ textAlign: 'center', padding: '20px 24px 6px' }}>
-            <h1 className="step-title" style={{ margin: 0 }}>Sign In</h1>
-            <p className="step-subtitle" style={{ marginTop: 6 }}>Access your patient intake form</p>
+            <h1 className="step-title" style={{ margin: 0 }}>Create Account</h1>
+            <p className="step-subtitle" style={{ marginTop: 6 }}>Sign up to begin your patient intake</p>
           </div>
 
           <div className="step-body" style={{ padding: '16px 28px 28px' }}>
@@ -122,7 +132,21 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="fg" style={{ gap: 16 }}>
+            <form onSubmit={handleSignUp} className="fg" style={{ gap: 16 }}>
+              <div className="fg">
+                <label htmlFor="name">Full Name<span className="req">*</span></label>
+                <input
+                  id="name"
+                  type="text"
+                  className="fi"
+                  placeholder="e.g. Jane Doe"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  autoComplete="name"
+                  required
+                />
+              </div>
+
               <div className="fg">
                 <label htmlFor="email">Email Address<span className="req">*</span></label>
                 <input
@@ -144,10 +168,10 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     className="fi"
-                    placeholder="Enter your password"
+                    placeholder="Min. 8 characters"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     required
                   />
                   <button
@@ -159,6 +183,31 @@ export default function LoginPage() {
                     {showPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
+                <p className="pw-hint">Must be at least 8 characters</p>
+              </div>
+
+              <div className="fg">
+                <label htmlFor="confirmPassword">Confirm Password<span className="req">*</span></label>
+                <div className="pw-wrap">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirm ? 'text' : 'password'}
+                    className="fi"
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="pw-toggle"
+                    onClick={() => setShowConfirm(v => !v)}
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -167,15 +216,15 @@ export default function LoginPage() {
                 style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '12px 24px' }}
                 disabled={loading}
               >
-                {loading ? <><span className="spinner" /> Signing in…</> : 'Sign In'}
+                {loading ? <><span className="spinner" /> Creating account…</> : 'Create Account'}
               </button>
             </form>
 
             <div className="auth-divider">or</div>
 
             <div className="auth-link-row">
-              Don&apos;t have an account?{' '}
-              <a onClick={() => router.push('/signup')}>Create one</a>
+              Already have an account?{' '}
+              <a onClick={() => router.push('/')}>Sign in</a>
             </div>
           </div>
         </div>

@@ -17,9 +17,21 @@ const Radio = ({ name, value, label, checked, onChange }: { name:string;value:st
   </label>
 );
 
-const Check = ({ value, label, checked, onChange }: { value:string;label:string;checked:boolean;onChange:()=>void }) => (
+const Check = ({
+  value,
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  value:string;
+  label:string;
+  checked:boolean;
+  onChange:()=>void;
+  disabled?: boolean;
+}) => (
   <label className={`check-opt${checked?' checked':''}`}>
-    <input type="checkbox" value={value} checked={checked} onChange={onChange} />{label}
+    <input type="checkbox" value={value} checked={checked} onChange={onChange} disabled={disabled} />{label}
   </label>
 );
 
@@ -29,6 +41,7 @@ const DURATIONS = ['<3 months','3–12 months','1–2 years','2–5 years','5–
 export default function Step2DiseaseChar({ formData: d, onChange, errors: e }: Props) {
   const toggle = (arr: string[], val: string) =>
     arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+  const noneSelected = d.previousSurgeries.includes('None');
 
   return (
     <div className="form-grid">
@@ -63,7 +76,15 @@ export default function Step2DiseaseChar({ formData: d, onChange, errors: e }: P
             {SURGERIES.map(opt => (
               <Check key={opt} value={opt} label={opt}
                 checked={d.previousSurgeries.includes(opt)}
-                onChange={() => onChange('previousSurgeries', toggle(d.previousSurgeries, opt))} />
+                disabled={noneSelected && opt !== 'None'}
+                onChange={() => {
+                  if (opt === 'None') {
+                    onChange('previousSurgeries', d.previousSurgeries.includes('None') ? [] : ['None']);
+                    return;
+                  }
+                  const withoutNone = d.previousSurgeries.filter((x) => x !== 'None');
+                  onChange('previousSurgeries', toggle(withoutNone, opt));
+                }} />
             ))}
           </div>
         </Fg>

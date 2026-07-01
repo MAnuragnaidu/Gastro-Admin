@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormData, initialFormData, STEP_META, validateStep } from '@/lib/formSchema';
-import { INTAKE_SUBMITTED_KEY, PATIENT_ENTRY_KEY } from '@/lib/intakeSession';
+import { INTAKE_SUBMITTED_KEY, PATIENT_ENTRY_KEY, getPatientAuth, clearPatientAuth } from '@/lib/intakeSession';
 import Step1PatientInfo from '@/components/steps/Step1PatientInfo';
 import Step2DiseaseChar from '@/components/steps/Step2DiseaseChar';
 
@@ -21,6 +21,7 @@ export default function FormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [sessionReady, setSessionReady] = useState(false);
+  const [patientName, setPatientName] = useState('');
 
   const currentMeta = STEP_META[step - 1];
 
@@ -31,10 +32,19 @@ export default function FormPage() {
       router.replace('/');
       return;
     }
-    if (!sessionStorage.getItem(PATIENT_ENTRY_KEY)) {
+
+    const auth = getPatientAuth();
+    if (!auth) {
       router.replace('/');
       return;
     }
+
+    setPatientName(auth.name);
+    setData(prev => ({
+      ...prev,
+      name: auth.name || prev.name,
+      email: auth.email || prev.email,
+    }));
 
     const saved = sessionStorage.getItem(PATIENT_ENTRY_KEY);
     if (saved) {
@@ -42,8 +52,8 @@ export default function FormPage() {
         const parsed = JSON.parse(saved);
         setData(prev => ({
           ...prev,
-          name: parsed.name || prev.name,
-          email: parsed.email || prev.email,
+          name: parsed.name || auth.name || prev.name,
+          email: parsed.email || auth.email || prev.email,
         }));
       } catch (err) {
         console.error('Failed to parse patient_entry', err);
@@ -51,6 +61,11 @@ export default function FormPage() {
     }
     setSessionReady(true);
   }, [router]);
+
+  const handleSignOut = () => {
+    clearPatientAuth();
+    router.replace('/');
+  };
 
   const updateData = (field: string, value: any) => {
     setData(prev => ({ ...prev, [field]: value }));
@@ -155,7 +170,25 @@ export default function FormPage() {
     <div className="page-root">
       <header className="page-header">
         <div className="header-brand">MyGastro<span>.Ai</span></div>
-        <div className="header-tag">Patient Intake</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {patientName && (
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+              {patientName}
+            </span>
+          )}
+          <div className="header-tag">Patient Intake</div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              fontSize: 12, padding: '3px 10px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff', cursor: 'pointer', fontWeight: 500,
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
       </header>
 
       <main className="page-main">
